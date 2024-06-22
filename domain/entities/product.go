@@ -25,10 +25,14 @@ func (p *Product) ID() string {
 	return p.id
 }
 
-func (p *Product) App() Apps {
-	return p.app
+func (p *Product) App() *Apps {
+	return &p.app
 }
 
 func (p *Product) TierName() string {
 	return p.tierName
+}
+
+func (p *Product) TierIndex() int {
+	return p.tierIndex
 }

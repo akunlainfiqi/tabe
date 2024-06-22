@@ -18,26 +18,64 @@ func NewTenantRepository(db *gorm.DB) repositories.TenantRepository {
 
 // GetById finds a tenant by its ID and throw an error if not found
 func (tr *TenantRepository) GetById(id string) (*entities.Tenant, error) {
-	var tenant entities.Tenant
-	if err := tr.db.Where("id = ?", id).First(&tenant).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.ErrTenantNotFound
-		}
-		return nil, err
+	var dto struct {
+		ID             string
+		Name           string
+		ProductId      string
+		OrganizationId string
+		ActiveUntil    int64
+		PriceId        string
 	}
+
+	tr.db.Raw(`
+		SELECT
+			t.id,
+			t.name,
+			t.product_id,
+			t.organization_id,
+			t.active_until,
+			t.price_id
+		FROM tenants t
+		WHERE t.id = ?
+	`, id).Scan(&dto)
+
+	tenant := entities.BuildTenant(dto.ID, dto.Name, dto.ProductId, dto.OrganizationId, dto.PriceId, dto.ActiveUntil)
 
 	if tenant.ID() == "" {
 		return nil, errors.ErrTenantNotFound
 	}
-	return &tenant, nil
+	return tenant, nil
 }
 
 // Create creates a new tenant
 func (tr *TenantRepository) Create(tenant *entities.Tenant) error {
-	return tr.db.Create(tenant).Error
+	err := tr.db.Exec(`
+		INSERT INTO tenants (id, name, product_id, organization_id, price_id, active_until)
+		VALUES (@id, @name, @product_id, @organization_id, @price_id, @active_until)
+	`, map[string]interface{}{
+		"id":              tenant.ID(),
+		"name":            tenant.Name(),
+		"product_id":      tenant.ProductID(),
+		"organization_id": tenant.OrganizationID(),
+		"price_id":        tenant.PriceID(),
+		"active_until":    tenant.ActiveUntil(),
+	}).Error
+	return err
 }
 
 // Update updates a tenant
 func (tr *TenantRepository) Update(tenant *entities.Tenant) error {
-	return tr.db.Save(tenant).Error
+	err := tr.db.Exec(`
+		UPDATE tenants
+		SET name = @name, product_id = @product_id, organization_id = @organization_id, price_id = @price_id, active_until = @active_until
+		WHERE id = @id
+	`, map[string]interface{}{
+		"id":              tenant.ID(),
+		"name":            tenant.Name(),
+		"product_id":      tenant.ProductID(),
+		"organization_id": tenant.OrganizationID(),
+		"price_id":        tenant.PriceID(),
+		"active_until":    tenant.ActiveUntil(),
+	}).Error
+	return err
 }

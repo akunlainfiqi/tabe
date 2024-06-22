@@ -17,25 +17,69 @@ func NewTransactionRepository(db *gorm.DB) repositories.TransactionRepository {
 }
 
 func (r *transactionRepository) GetByID(id string) (*entities.Transaction, error) {
-	var transaction entities.Transaction
-	if err := r.db.Where("id = ?", id).First(&transaction).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.ErrTransactionNotFound
-		}
-		return nil, err
+	var dto struct {
+		ID                   string
+		BillsID              string
+		OrganizationId       string
+		Amount               int64
+		TransactionType      string
+		TransactionTimestamp int64
 	}
-	return &transaction, nil
+	r.db.Raw(`
+		SELECT 
+			t.id,
+			t.bills_id,
+			t.organization_id,
+			t.amount,
+			t.transaction_type,
+			t.transaction_timestamp
+		FROM transactions t
+		WHERE t.id = ?
+		`, id).Scan(&dto)
+
+	transaction := entities.BuildTransaction(dto.ID, dto.BillsID, dto.OrganizationId, dto.Amount, dto.TransactionType, dto.TransactionTimestamp)
+
+	if transaction.ID() == "" {
+		return nil, errors.ErrTransactionNotFound
+	}
+	return transaction, nil
 }
 
 func (r *transactionRepository) Create(transaction *entities.Transaction) error {
-	if err := r.db.Create(transaction).Error; err != nil {
+	if err := r.db.Exec(`
+		INSERT INTO transactions (id, bills_id, organization_id, amount, transaction_type, transaction_timestamp)
+		VALUES (@id, @bills_id, @organization_id, @amount, @transaction_type, @transaction_timestamp)
+	`, map[string]interface{}{
+		"id":                    transaction.ID(),
+		"bills_id":              transaction.BillsID(),
+		"organization_id":       transaction.OrganizationID(),
+		"amount":                transaction.Amount(),
+		"transaction_type":      transaction.TransactionType(),
+		"transaction_timestamp": transaction.TransactionTimestamp(),
+	}).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
 func (r *transactionRepository) Update(transaction *entities.Transaction) error {
-	if err := r.db.Save(transaction).Error; err != nil {
+	if err := r.db.Exec(`
+		UPDATE transactions
+		SET
+			bills_id = @bills_id,
+			organization_id = @organization_id,
+			amount = @amount,
+			transaction_type = @transaction_type,
+			transaction_timestamp = @transaction_timestamp
+		WHERE id = @id
+	`, map[string]interface{}{
+		"id":                    transaction.ID(),
+		"bills_id":              transaction.BillsID(),
+		"organization_id":       transaction.OrganizationID(),
+		"amount":                transaction.Amount(),
+		"transaction_type":      transaction.TransactionType(),
+		"transaction_timestamp": transaction.TransactionTimestamp(),
+	}).Error; err != nil {
 		return err
 	}
 	return nil

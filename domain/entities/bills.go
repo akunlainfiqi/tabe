@@ -6,12 +6,12 @@ import (
 )
 
 type Bills struct {
-	id             string 
+	id             string
 	organizationId string
 	tenantId       string
 	status         string
-	amount         float64
-	balanceUsed    float64
+	amount         int64
+	balanceUsed    int64
 	dueDate        int64
 }
 
@@ -22,12 +22,32 @@ const (
 	BillStatusCancelled      = "cancelled"
 )
 
+func BuildBills(
+	id,
+	organizationId,
+	tenantId,
+	status string,
+	amount,
+	balanceUsed,
+	dueDate int64,
+) *Bills {
+	return &Bills{
+		id:             id,
+		organizationId: organizationId,
+		tenantId:       tenantId,
+		status:         status,
+		amount:         amount,
+		balanceUsed:    balanceUsed,
+		dueDate:        dueDate,
+	}
+}
+
 func NewBills(
 	id,
 	organizationId,
 	tenantId string,
 	amount,
-	balanceUsed float64,
+	balanceUsed,
 	dueDate int64,
 ) (*Bills, error) {
 	var billStatus string
@@ -74,7 +94,7 @@ func (b *Bills) SetStatus(status string) {
 	b.status = status
 }
 
-func (b *Bills) Pay(amount float64) error {
+func (b *Bills) Pay(amount int64) error {
 	if amount > b.amount {
 		return errors.ErrInvalidBillAmount
 	}
@@ -100,11 +120,11 @@ func (b *Bills) IsOverdue() bool {
 	return b.dueDate < time.Now().Unix()
 }
 
-func (b *Bills) Amount() float64 {
+func (b *Bills) Amount() int64 {
 	return b.amount
 }
 
-func (b *Bills) BalanceUsed() float64 {
+func (b *Bills) BalanceUsed() int64 {
 	return b.balanceUsed
 }
 

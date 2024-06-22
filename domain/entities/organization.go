@@ -4,11 +4,33 @@ type Organization struct {
 	id             string
 	name           string
 	identifier     string
-	balance        float64
+	balance        int64
 	contactName    string
 	contactEmail   string
 	contactPhone   string
 	contactAddress string
+}
+
+func BuildOrganization(
+	id,
+	name,
+	identifier string,
+	balance int64,
+	contactName,
+	contactEmail,
+	contactPhone,
+	contactAddress string,
+) *Organization {
+	return &Organization{
+		id:             id,
+		name:           name,
+		identifier:     identifier,
+		balance:        balance,
+		contactName:    contactName,
+		contactEmail:   contactEmail,
+		contactPhone:   contactPhone,
+		contactAddress: contactAddress,
+	}
 }
 
 func NewOrganization(
@@ -20,10 +42,12 @@ func NewOrganization(
 	contactPhone,
 	contactAddress string,
 ) *Organization {
+	balance := int64(0)
 	return &Organization{
 		id:             id,
 		name:           name,
 		identifier:     identifier,
+		balance:        balance,
 		contactName:    contactName,
 		contactEmail:   contactEmail,
 		contactPhone:   contactPhone,
@@ -43,7 +67,7 @@ func (o *Organization) Identifier() string {
 	return o.identifier
 }
 
-func (o *Organization) Balance() float64 {
+func (o *Organization) Balance() int64 {
 	return o.balance
 }
 
@@ -63,6 +87,6 @@ func (o *Organization) ContactAddress() string {
 	return o.contactAddress
 }
 
-func (o *Organization) SetBalance(balance float64) {
+func (o *Organization) SetBalance(balance int64) {
 	o.balance = balance
 }

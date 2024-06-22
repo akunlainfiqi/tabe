@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"errors"
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
 	"time"
@@ -58,24 +57,21 @@ func (c *CreateBillsCommand) Execute(req *CreateBillsRequest) error {
 		return err
 	}
 
-	organization, err := c.organizationRepository.FindByID(tenant.OrganizationID())
+	organization, err := c.organizationRepository.GetByID(tenant.OrganizationID())
 	if err != nil {
 		return err
 	}
 
-	if organization == nil {
-		return errors.New("organization_not_found")
-	}
 	billId, err := uuid.NewRandom()
 	if err != nil {
 		return err
 	}
 
-	price, err := c.priceRepository.FindByID(tenant.PriceID())
+	price, err := c.priceRepository.GetByID(tenant.PriceID())
 	if err != nil {
 		return err
 	}
-	balanceUsed := 0.0
+	balanceUsed := int64(0)
 
 	if req.useRemainingCredits {
 		if organization.Balance() < price.Price() {

@@ -6,4 +6,5 @@ import (
 
 type IamOrganizationRepository interface {
 	GetByID(id string) (*entities.IamOrganization, error)
+	IsOwner(organizationID, userID string) bool
 }

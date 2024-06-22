@@ -54,7 +54,7 @@ func New() *gin.Engine {
 	createBillCommand := commands.NewCreateBillsCommand(billsRepository, tenantRepository, organizationRepository, transactionRepository, priceRepository)
 	createOrganizationCommand := commands.NewCreateOrganizationCommand(organizationRepository, iamOrganizationRepository)
 	createProductCommand := commands.NewCreateProductCommand(productRepository, appsRepository, priceRepository)
-	createTenantCommand := commands.NewCreateTenantFromProductCommand(tenantRepository, organizationRepository, priceRepository)
+	createTenantCommand := commands.NewCreateTenantOnboardingCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, iamOrganizationRepository)
 
 	expireBillCommand := commands.NewExpireBillsCommand(billsRepository)
 	payBillCommand := commands.NewPayBillsCommand(billsRepository, tenantRepository, transactionRepository)
@@ -85,6 +85,7 @@ func New() *gin.Engine {
 			"message": user_id,
 		})
 	})
+	jwt.POST("/tenants", tenantController.CreateTenant)
 
 	v1.GET("/products", productController.GetAll)
 	v1.GET("/products/:app_id", productController.GetByAppID)
@@ -94,7 +95,6 @@ func New() *gin.Engine {
 	v1.POST("/bills/pay", billsControlerr.InternalPay)
 
 	v1.POST("/organizations", organizationController.Create)
-	v1.POST("/tenants", tenantController.CreateTenant)
 
 	return r
 }

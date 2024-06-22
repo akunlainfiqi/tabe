@@ -1,76 +1,106 @@
 package commands
 
 import (
-	"errors"
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
+	"saas-billing/errors"
+	"time"
+
+	"github.com/google/uuid"
 )
 
-type CreateTenantFromProductRequest struct {
+type CreateTenantOnboardingRequest struct {
 	priceId        string
 	organizationId string
 	tenantId       string
 	tenantName     string
+	userId         string
 }
 
-func NewCreateTenantFromProductRequest(
+func NewCreateTenantOnboardingRequest(
 	priceId,
 	organizationId,
 	tenantId,
-	tenantName string,
-) (*CreateTenantFromProductRequest, error) {
-	return &CreateTenantFromProductRequest{
+	tenantName,
+	userId string,
+) (*CreateTenantOnboardingRequest, error) {
+	return &CreateTenantOnboardingRequest{
 		priceId:        priceId,
 		organizationId: organizationId,
 		tenantId:       tenantId,
 		tenantName:     tenantName,
+		userId:         userId,
 	}, nil
 }
 
-type CreateTenantFromProductCommand struct {
+type CreateTenantOnboardingCommand struct {
 	tenantRepository       repositories.TenantRepository
 	organizationRepository repositories.OrganizationRepository
 	priceRepository        repositories.PriceRepository
+	billsRepository        repositories.BillsRepository
+
+	iamOrganizationRepository repositories.IamOrganizationRepository
 }
 
-func NewCreateTenantFromProductCommand(
+func NewCreateTenantOnboardingCommand(
 	tenantRepository repositories.TenantRepository,
 	organizationRepository repositories.OrganizationRepository,
 	priceRepository repositories.PriceRepository,
-) *CreateTenantFromProductCommand {
-	return &CreateTenantFromProductCommand{
-		tenantRepository:       tenantRepository,
-		organizationRepository: organizationRepository,
-		priceRepository:        priceRepository,
+	billsRepository repositories.BillsRepository,
+	iamOrganizationRepository repositories.IamOrganizationRepository,
+) *CreateTenantOnboardingCommand {
+	return &CreateTenantOnboardingCommand{
+		tenantRepository:          tenantRepository,
+		organizationRepository:    organizationRepository,
+		priceRepository:           priceRepository,
+		billsRepository:           billsRepository,
+		iamOrganizationRepository: iamOrganizationRepository,
 	}
 }
 
-func (c *CreateTenantFromProductCommand) Execute(req *CreateTenantFromProductRequest) error {
-	organization, err := c.organizationRepository.FindByID(req.organizationId)
+func (c *CreateTenantOnboardingCommand) Execute(req *CreateTenantOnboardingRequest) (*entities.Bills, error) {
+	isOrganizationOwner := c.iamOrganizationRepository.IsOwner(req.organizationId, req.userId)
+	if !isOrganizationOwner {
+		return nil, errors.ErrUnauthorized
+	}
+
+	organization, err := c.iamOrganizationRepository.GetByID(req.organizationId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if organization == nil {
-		return errors.New("organization not found")
-	}
-
-	price, err := c.priceRepository.FindByID(req.priceId)
+	price, err := c.priceRepository.GetByID(req.priceId)
 	if err != nil {
-		return err
-	}
-
-	if price == nil {
-		return errors.New("price not found")
+		return nil, err
 	}
 
 	product := price.Product()
-
-	tenant := entities.NewTenant(req.tenantId, req.tenantName, product.ID(), organization.ID(), price.ID())
+	tenant := entities.NewTenant(req.tenantId, req.tenantName, product.ID(), organization.ID, price.ID())
 
 	if err := c.tenantRepository.Create(tenant); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	billId, err := uuid.NewRandom()
+	if err != nil {
+		return nil, err
+	}
+
+	bill, err := entities.NewBills(
+		billId.String(),
+		organization.ID,
+		tenant.ID(),
+		price.Price(),
+		0,
+		time.Now().AddDate(0, 0, 10).Unix(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := c.billsRepository.Create(bill); err != nil {
+		return nil, err
+	}
+
+	return bill, nil
 }

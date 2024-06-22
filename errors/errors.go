@@ -1,6 +1,12 @@
 package errors
 
 var (
+	ErrUnauthorized = NewInvariant(InvariantParam{
+		Code:    4011,
+		Message: "unauthorized",
+	})
+)
+var (
 	ErrInvalidBillAmount = NewInvariant(InvariantParam{
 		Code:    1001,
 		Message: "invalid_bill_amount",
@@ -36,5 +42,10 @@ var (
 	ErrTransactionNotFound = NewInvariant(InvariantParam{
 		Code:    4046,
 		Message: "transaction_not_found",
+	})
+
+	ErrProductNotFound = NewInvariant(InvariantParam{
+		Code:    4047,
+		Message: "product_not_found",
 	})
 )

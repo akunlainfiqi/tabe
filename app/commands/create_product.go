@@ -19,8 +19,8 @@ type CreateProductTierRequest struct {
 }
 
 type CreateProductPriceRequest struct {
-	Price      float64 `json:"price"`
-	Reccurence string  `json:"reccurence"`
+	Price      int64  `json:"price"`
+	Reccurence string `json:"reccurence"`
 }
 
 func NewCreateProductRequest(

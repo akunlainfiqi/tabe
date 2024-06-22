@@ -3,6 +3,7 @@ package pgsql
 import (
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
+	"saas-billing/errors"
 
 	"gorm.io/gorm"
 )
@@ -17,14 +18,44 @@ func NewAppsRepository(db *gorm.DB) repositories.AppsRepository {
 
 // FindByID finds an app by its ID
 func (ar *AppsRepository) FindByID(id string) (*entities.Apps, error) {
-	var app entities.Apps
-	if err := ar.db.Where("id = ?", id).First(&app).Error; err != nil {
-		return nil, err
+	var dto struct {
+		ID   string
+		Name string
 	}
-	return &app, nil
+	if err := ar.db.Raw(`
+		SELECT
+			id,
+			name
+		FROM
+			apps
+		WHERE
+			id = @id
+	`, map[string]interface{}{
+		"id": id,
+	}).Scan(&dto); err != nil {
+		return nil, err.Error
+	}
+
+	if dto.ID == "" {
+		return nil, errors.ErrAppsNotFound
+	}
+
+	app := entities.NewApps(dto.ID, dto.Name)
+
+	return app, nil
 }
 
 // Create creates a new app
 func (ar *AppsRepository) Create(app *entities.Apps) error {
-	return ar.db.Create(app).Error
+	err := ar.db.Exec(`
+		INSERT INTO apps (id, name)
+		VALUES (@id, @name)
+	`, map[string]interface{}{
+		"id":   app.ID(),
+		"name": app.Name(),
+	}).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }

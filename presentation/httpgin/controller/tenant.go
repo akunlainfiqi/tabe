@@ -8,11 +8,11 @@ import (
 )
 
 type TenantController struct {
-	CreateTenantCommand commands.CreateTenantFromProductCommand
+	CreateTenantCommand commands.CreateTenantOnboardingCommand
 }
 
 func NewTenantController(
-	createTenantCommand commands.CreateTenantFromProductCommand,
+	createTenantCommand commands.CreateTenantOnboardingCommand,
 ) *TenantController {
 	return &TenantController{
 		CreateTenantCommand: createTenantCommand,
@@ -20,6 +20,16 @@ func NewTenantController(
 }
 
 func (c *TenantController) CreateTenant(ctx *gin.Context) {
+	userId := ctx.GetString("user_id")
+	if userId == "" {
+		ctx.JSON(401,
+			gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "Unauthorized",
+			})
+		return
+	}
+
 	var params struct {
 		PriceId    string `json:"price_id" binding:"required"`
 		OrgId      string `json:"org_id" binding:"required"`
@@ -27,7 +37,7 @@ func (c *TenantController) CreateTenant(ctx *gin.Context) {
 		TenantName string `json:"tenant_name" binding:"required"`
 	}
 
-	if err := ctx.ShouldBindJSON(&params); err != nil {
+	if err := ctx.ShouldBind(&params); err != nil {
 		ctx.JSON(400,
 			gin.H{
 				"status":  http.StatusBadRequest,
@@ -36,11 +46,12 @@ func (c *TenantController) CreateTenant(ctx *gin.Context) {
 		return
 	}
 
-	req, err := commands.NewCreateTenantFromProductRequest(
+	req, err := commands.NewCreateTenantOnboardingRequest(
 		params.PriceId,
 		params.OrgId,
 		params.TenantId,
 		params.TenantName,
+		userId,
 	)
 	if err != nil {
 		ctx.JSON(400,
@@ -51,7 +62,8 @@ func (c *TenantController) CreateTenant(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.CreateTenantCommand.Execute(req); err != nil {
+	bills, err := c.CreateTenantCommand.Execute(req)
+	if err != nil {
 		ctx.JSON(500,
 			gin.H{
 				"status":  http.StatusInternalServerError,
@@ -64,5 +76,6 @@ func (c *TenantController) CreateTenant(ctx *gin.Context) {
 		gin.H{
 			"status":  http.StatusCreated,
 			"message": "success",
+			"data":    bills,
 		})
 }

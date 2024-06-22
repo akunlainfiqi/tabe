@@ -9,6 +9,24 @@ type Tenant struct {
 	priceId        string
 }
 
+func BuildTenant(
+	id,
+	name,
+	productId,
+	organizationId,
+	priceId string,
+	activeUntil int64,
+) *Tenant {
+	return &Tenant{
+		id:             id,
+		name:           name,
+		productId:      productId,
+		organizationId: organizationId,
+		activeUntil:    activeUntil,
+		priceId:        priceId,
+	}
+}
+
 func NewTenant(
 	id,
 	name,
