@@ -4,6 +4,7 @@ import (
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
 	"saas-billing/errors"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -62,13 +63,29 @@ func (pr *ProductRepository) FindByID(id string) (*entities.Product, error) {
 // Create creates a new product
 func (pr *ProductRepository) Create(product *entities.Product) error {
 	if err := pr.db.Exec(`
-		INSERT INTO products (id, app_id, tier_name, tier_index)
-		VALUES (@id, @app_id, @tier_name, @tier_index)
+		INSERT INTO 
+			products (
+				id, 
+				app_id, 
+				tier_name, 
+				tier_index, 
+				created_at, 
+				updated_at
+				)
+		VALUES (
+			@id, 
+			@app_id, 
+			@tier_name, 
+			@tier_index, 
+			@now, 
+			@now
+			)
 	`, map[string]interface{}{
 		"id":         product.ID(),
 		"app_id":     product.App().ID(),
 		"tier_name":  product.TierName(),
 		"tier_index": product.TierIndex(),
+		"now":        time.Now().Unix(),
 	}).Error; err != nil {
 		return err
 	}

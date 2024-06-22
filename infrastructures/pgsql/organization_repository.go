@@ -4,6 +4,7 @@ import (
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
 	"saas-billing/errors"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -61,8 +62,8 @@ func (or *OrganizationRepository) GetByID(id string) (*entities.Organization, er
 // Create creates a new organization
 func (or *OrganizationRepository) Create(organization *entities.Organization) error {
 	err := or.db.Exec(`
-		INSERT INTO organizations (id, name, identifier, balance, contact_name, contact_email, contact_phone, contact_address)
-		VALUES (@id, @name, @identifier, @balance, @contact_name, @contact_email, @contact_phone, @contact_address)
+		INSERT INTO organizations (id, name, identifier, balance, contact_name, contact_email, contact_phone, contact_address, created_at, updated_at)
+		VALUES (@id, @name, @identifier, @balance, @contact_name, @contact_email, @contact_phone, @contact_address, @now, @now)
 	`, map[string]interface{}{
 		"id":              organization.ID(),
 		"name":            organization.Name(),
@@ -72,6 +73,7 @@ func (or *OrganizationRepository) Create(organization *entities.Organization) er
 		"contact_email":   organization.ContactEmail(),
 		"contact_phone":   organization.ContactPhone(),
 		"contact_address": organization.ContactAddress(),
+		"now":             time.Now().Unix(),
 	}).Error
 	return err
 }
@@ -80,7 +82,7 @@ func (or *OrganizationRepository) Create(organization *entities.Organization) er
 func (or *OrganizationRepository) Update(organization *entities.Organization) error {
 	err := or.db.Exec(`
 		UPDATE organizations
-		SET name = @name, identifier = @identifier, balance = @balance, contact_name = @contact_name, contact_email = @contact_email, contact_phone = @contact_phone, contact_address = @contact_address
+		SET name = @name, identifier = @identifier, balance = @balance, contact_name = @contact_name, contact_email = @contact_email, contact_phone = @contact_phone, contact_address = @contact_address, updated_at = @now
 		WHERE id = @id
 	`, map[string]interface{}{
 		"id":              organization.ID(),
@@ -91,6 +93,7 @@ func (or *OrganizationRepository) Update(organization *entities.Organization) er
 		"contact_email":   organization.ContactEmail(),
 		"contact_phone":   organization.ContactPhone(),
 		"contact_address": organization.ContactAddress(),
+		"now":             time.Now().Unix(),
 	}).Error
 	return err
 }

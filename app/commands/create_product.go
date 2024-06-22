@@ -66,7 +66,7 @@ func (c *CreateProductCommand) Execute(req *CreateProductRequest) error {
 		}
 
 		for _, price := range tier.Price {
-			productPrice := entities.NewPrice(uuid.New().String(), *product, price.Price, price.Reccurence)
+			productPrice := entities.NewPrice(uuid.New().String(), product, price.Price, price.Reccurence)
 
 			if err := c.priceRepository.Create(productPrice); err != nil {
 				return err

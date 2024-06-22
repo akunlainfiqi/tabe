@@ -1,10 +1,10 @@
 package pgsql
 
 import (
-	"log"
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
 	"saas-billing/errors"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -45,11 +45,9 @@ func (pr *PriceRepository) GetByID(id string) (*entities.Price, error) {
 		WHERE p.id = ?
 		`, id).Scan(&dto)
 
-	log.Print(dto)
-
 	app := entities.NewApps(dto.AppId, dto.AppName)
 	product := entities.NewProduct(dto.ProductId, *app, dto.TierName, dto.TierIndex)
-	price := entities.NewPrice(dto.ID, *product, dto.Price, dto.Reccurence)
+	price := entities.NewPrice(dto.ID, product, dto.Price, dto.Reccurence)
 
 	if price.ID() == "" {
 		return nil, errors.ErrPriceNotFound
@@ -59,5 +57,18 @@ func (pr *PriceRepository) GetByID(id string) (*entities.Price, error) {
 
 // Create creates a new price
 func (pr *PriceRepository) Create(price *entities.Price) error {
-	return pr.db.Create(price).Error
+	err := pr.db.Exec(`
+		INSERT INTO prices (id, product_id, price, reccurence,  created_at, updated_at)
+		VALUES (@id, @product_id, @price, @reccurence, @now, @now)
+	`, map[string]interface{}{
+		"id":         price.ID(),
+		"product_id": price.Product().ID(),
+		"price":      price.Price(),
+		"reccurence": price.Recurrence(),
+		"now":        time.Now().Unix(),
+	}).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }

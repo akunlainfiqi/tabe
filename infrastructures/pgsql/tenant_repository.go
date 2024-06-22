@@ -4,6 +4,7 @@ import (
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
 	"saas-billing/errors"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -50,8 +51,27 @@ func (tr *TenantRepository) GetById(id string) (*entities.Tenant, error) {
 // Create creates a new tenant
 func (tr *TenantRepository) Create(tenant *entities.Tenant) error {
 	err := tr.db.Exec(`
-		INSERT INTO tenants (id, name, product_id, organization_id, price_id, active_until)
-		VALUES (@id, @name, @product_id, @organization_id, @price_id, @active_until)
+		INSERT INTO 
+			tenants (
+				id, 
+				name, 
+				product_id, 
+				organization_id, 
+				price_id, 
+				active_until, 
+				created_at, 
+				updated_at
+				)
+		VALUES (
+			@id, 
+			@name, 
+			@product_id, 
+			@organization_id, 
+			@price_id, 
+			@active_until, 
+			@date, 
+			@date
+			)
 	`, map[string]interface{}{
 		"id":              tenant.ID(),
 		"name":            tenant.Name(),
@@ -59,6 +79,7 @@ func (tr *TenantRepository) Create(tenant *entities.Tenant) error {
 		"organization_id": tenant.OrganizationID(),
 		"price_id":        tenant.PriceID(),
 		"active_until":    tenant.ActiveUntil(),
+		"date":            time.Now().Unix(),
 	}).Error
 	return err
 }
@@ -66,9 +87,17 @@ func (tr *TenantRepository) Create(tenant *entities.Tenant) error {
 // Update updates a tenant
 func (tr *TenantRepository) Update(tenant *entities.Tenant) error {
 	err := tr.db.Exec(`
-		UPDATE tenants
-		SET name = @name, product_id = @product_id, organization_id = @organization_id, price_id = @price_id, active_until = @active_until
-		WHERE id = @id
+		UPDATE 
+			tenants
+		SET 
+			name = @name, 
+			product_id = @product_id, 
+			organization_id = @organization_id, 
+			price_id = @price_id, 
+			active_until = @active_until, 
+			updated_at = @date
+		WHERE 
+			id = @id
 	`, map[string]interface{}{
 		"id":              tenant.ID(),
 		"name":            tenant.Name(),
@@ -76,6 +105,7 @@ func (tr *TenantRepository) Update(tenant *entities.Tenant) error {
 		"organization_id": tenant.OrganizationID(),
 		"price_id":        tenant.PriceID(),
 		"active_until":    tenant.ActiveUntil(),
+		"date":            time.Now().Unix(),
 	}).Error
 	return err
 }

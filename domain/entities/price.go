@@ -2,7 +2,7 @@ package entities
 
 type Price struct {
 	id         string
-	product    Product
+	product    *Product
 	price      int64
 	reccurence string
 }
@@ -14,7 +14,7 @@ const (
 
 func NewPrice(
 	id string,
-	product Product,
+	product *Product,
 	price int64,
 	reccurence string,
 ) *Price {
@@ -30,7 +30,7 @@ func (p *Price) ID() string {
 	return p.id
 }
 
-func (p *Price) Product() Product {
+func (p *Price) Product() *Product {
 	return p.product
 }
 

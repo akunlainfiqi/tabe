@@ -4,6 +4,7 @@ import (
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
 	"saas-billing/errors"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -51,8 +52,8 @@ func (r *billsRepository) GetByID(id string) (*entities.Bills, error) {
 
 func (r *billsRepository) Create(billing *entities.Bills) error {
 	err := r.db.Exec(`
-		INSERT INTO bills (id, organization_id, tenant_id, status, due_date, amount, balance_used)
-		VALUES (@id, @organization_id, @tenant_id, @status, @due_date, @amount, @balance_used)
+		INSERT INTO bills (id, organization_id, tenant_id, status, due_date, amount, balance_used, created_at, updated_at)
+		VALUES (@id, @organization_id, @tenant_id, @status, @due_date, @amount, @balance_used, @now, @now)
 	`, map[string]interface{}{
 		"id":              billing.ID(),
 		"organization_id": billing.OrganizationID(),
@@ -61,6 +62,7 @@ func (r *billsRepository) Create(billing *entities.Bills) error {
 		"due_date":        billing.DueDate(),
 		"amount":          billing.Amount(),
 		"balance_used":    billing.BalanceUsed(),
+		"now":             time.Now().Unix(),
 	}).Error
 	if err != nil {
 		return err
@@ -77,7 +79,8 @@ func (r *billsRepository) Update(billing *entities.Bills) error {
 			status = @status,
 			due_date = @due_date,
 			amount = @amount,
-			balance_used = @balance_used
+			balance_used = @balance_used,
+			updated_at = @now
 		WHERE id = @id
 	`, map[string]interface{}{
 		"id":              billing.ID(),
@@ -87,6 +90,7 @@ func (r *billsRepository) Update(billing *entities.Bills) error {
 		"due_date":        billing.DueDate(),
 		"amount":          billing.Amount(),
 		"balance_used":    billing.BalanceUsed(),
+		"now":             time.Now().Unix(),
 	}).Error
 	return err
 }
