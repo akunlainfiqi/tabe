@@ -107,6 +107,8 @@ func (pq *productQuery) FindAll() ([]queries.Product, error) {
 	}
 
 	products := make([]queries.Product, 0)
+	productExists := false
+
 	for _, t := range temp {
 		price := queries.Price{
 			ID:         t.ID,
@@ -115,23 +117,28 @@ func (pq *productQuery) FindAll() ([]queries.Product, error) {
 			Reccurence: t.Reccurence,
 		}
 
+		productExists = false
 		for i, p := range products {
 			if p.ID == t.ID {
 				products[i].Price = append(products[i].Price, price)
-				continue
+				productExists = true
+				break
 			}
 		}
 
-		product := queries.Product{
-			ID:        t.ID,
-			AppId:     t.AppID,
-			Name:      t.Name,
-			TierName:  t.TierName,
-			TierIndex: t.TierIndex,
-			Price:     []queries.Price{price},
-		}
+		if !productExists {
+			// Product does not exist, create a new one
+			product := queries.Product{
+				ID:        t.ID,
+				AppId:     t.AppID,
+				Name:      t.Name,
+				TierName:  t.TierName,
+				TierIndex: t.TierIndex,
+				Price:     []queries.Price{price},
+			}
 
-		products = append(products, product)
+			products = append(products, product)
+		}
 	}
 
 	return products, nil
@@ -168,6 +175,8 @@ func (pq *productQuery) FindByAppID(appID string) ([]queries.Product, error) {
 	}
 
 	products := make([]queries.Product, 0)
+	productExists := false
+
 	for _, t := range temp {
 		price := queries.Price{
 			ID:         t.ID,
@@ -176,23 +185,28 @@ func (pq *productQuery) FindByAppID(appID string) ([]queries.Product, error) {
 			Reccurence: t.Reccurence,
 		}
 
+		productExists = false
 		for i, p := range products {
 			if p.ID == t.ID {
 				products[i].Price = append(products[i].Price, price)
-				continue
+				productExists = true
+				break
 			}
 		}
 
-		product := queries.Product{
-			ID:        t.ID,
-			AppId:     t.AppID,
-			Name:      t.Name,
-			TierName:  t.TierName,
-			TierIndex: t.TierIndex,
-			Price:     []queries.Price{price},
-		}
+		if !productExists {
+			// Product does not exist, create a new one
+			product := queries.Product{
+				ID:        t.ID,
+				AppId:     t.AppID,
+				Name:      t.Name,
+				TierName:  t.TierName,
+				TierIndex: t.TierIndex,
+				Price:     []queries.Price{price},
+			}
 
-		products = append(products, product)
+			products = append(products, product)
+		}
 	}
 
 	return products, nil
