@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 golang:1.21 as build
+FROM --platform=linux/amd64 golang:1.22 as build
 
 WORKDIR /go/src/app
 
