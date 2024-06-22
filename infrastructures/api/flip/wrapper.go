@@ -1,0 +1,3 @@
+package flip
+
+const flipEndpoint = ""
