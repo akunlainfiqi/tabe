@@ -3,6 +3,8 @@ package controller
 import (
 	"net/http"
 	"saas-billing/app/commands"
+	"saas-billing/app/queries"
+	"saas-billing/errors"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,17 +13,26 @@ type BillController struct {
 	ExpireBillsCommand commands.ExpireBillsCommand
 	PayBillsCommand    commands.PayBillsCommand
 	CreateBillCommand  commands.CreateBillsCommand
+
+	IamUserOrganizationQuery queries.IamUserOrganizationQuery
+	BillQuery                queries.BillQuery
 }
 
 func NewBillController(
 	expireBillsCommand commands.ExpireBillsCommand,
 	payBillsCommand commands.PayBillsCommand,
 	createBillCommand commands.CreateBillsCommand,
+
+	iamUserOrganizationQuery queries.IamUserOrganizationQuery,
+	billQuery queries.BillQuery,
 ) *BillController {
 	return &BillController{
 		ExpireBillsCommand: expireBillsCommand,
 		PayBillsCommand:    payBillsCommand,
 		CreateBillCommand:  createBillCommand,
+
+		IamUserOrganizationQuery: iamUserOrganizationQuery,
+		BillQuery:                billQuery,
 	}
 }
 
@@ -130,5 +141,120 @@ func (c *BillController) Create(ctx *gin.Context) {
 		gin.H{
 			"status":  http.StatusCreated,
 			"message": "success",
+		})
+}
+
+func (c *BillController) GetBillDetail(ctx *gin.Context) {
+	userId := ctx.GetString("user_id")
+	if userId == "" {
+		ctx.JSON(401,
+			gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "Unauthorized",
+			})
+		return
+	}
+
+	var params struct {
+		BillID string `form:"bill_id" binding:"required"`
+	}
+
+	if err := ctx.ShouldBind(&params); err != nil {
+		ctx.JSON(400,
+			gin.H{
+				"status":  http.StatusBadRequest,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	bill, err := c.BillQuery.GetByID(params.BillID)
+	if err != nil {
+		if err == errors.ErrBillsNotFound {
+			ctx.JSON(404,
+				gin.H{
+					"status":  http.StatusNotFound,
+					"message": err.Error(),
+				})
+			return
+		}
+		ctx.JSON(500,
+			gin.H{
+				"status":  http.StatusInternalServerError,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	isOwner := c.IamUserOrganizationQuery.IsOwner(bill.OrganizationId, userId)
+	if !isOwner {
+		ctx.JSON(403,
+			gin.H{
+				"status":  http.StatusForbidden,
+				"message": "Forbidden",
+			})
+		return
+	}
+
+	ctx.JSON(200,
+		gin.H{
+			"status": http.StatusOK,
+			"data":   bill,
+		})
+}
+
+func (c *BillController) GetOrganizationBills(ctx *gin.Context) {
+	userId := ctx.GetString("user_id")
+	if userId == "" {
+		ctx.JSON(401,
+			gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "Unauthorized",
+			})
+		return
+	}
+
+	organizationID := ctx.Param("organization_id")
+	if organizationID == "" {
+		ctx.JSON(400,
+			gin.H{
+				"status":  http.StatusBadRequest,
+				"message": "Organization ID is required",
+			})
+		return
+	}
+
+	isOwner := c.IamUserOrganizationQuery.IsOwner(organizationID, userId)
+	if !isOwner {
+		ctx.JSON(403,
+			gin.H{
+				"status":  http.StatusForbidden,
+				"message": "Forbidden",
+			})
+		return
+	}
+
+	bills, err := c.BillQuery.GetByOrganizationID(organizationID)
+	if err != nil {
+		if err == errors.ErrBillsNotFound {
+			ctx.JSON(404,
+				gin.H{
+					"status":  http.StatusNotFound,
+					"message": err.Error(),
+				})
+			return
+		}
+		ctx.JSON(500,
+			gin.H{
+				"status":  http.StatusInternalServerError,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	ctx.JSON(200,
+		gin.H{
+			"status": http.StatusOK,
+			"data":   bills,
 		})
 }

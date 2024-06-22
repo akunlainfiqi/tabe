@@ -76,6 +76,6 @@ func (c *TenantController) CreateTenant(ctx *gin.Context) {
 		gin.H{
 			"status":  http.StatusCreated,
 			"message": "success",
-			"data":    bills,
+			"data":    bills.ID(),
 		})
 }

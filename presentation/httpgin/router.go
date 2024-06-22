@@ -40,6 +40,8 @@ func New() *gin.Engine {
 	v1 := r.Group("/v1")
 
 	productQueries := pgsql.NewProductQuery(pgclient)
+	billQueries := pgsql.NewBillQuery(pgclient)
+	iamOrganizationQuery := pgsql.NewIamUserOrganizationQuery(iampgclient)
 
 	appsRepository := pgsql.NewAppsRepository(pgclient)
 	billsRepository := pgsql.NewBillsRepository(pgclient)
@@ -60,7 +62,7 @@ func New() *gin.Engine {
 	payBillCommand := commands.NewPayBillsCommand(billsRepository, tenantRepository, transactionRepository)
 
 	productController := controller.NewProductController(productQueries, *createProductCommand)
-	billsControlerr := controller.NewBillController(*expireBillCommand, *payBillCommand, *createBillCommand)
+	billsControlerr := controller.NewBillController(*expireBillCommand, *payBillCommand, *createBillCommand, iamOrganizationQuery, billQueries)
 	organizationController := controller.NewOrganizationController(*createOrganizationCommand)
 	tenantController := controller.NewTenantController(*createTenantCommand)
 
@@ -85,7 +87,10 @@ func New() *gin.Engine {
 			"message": user_id,
 		})
 	})
+
 	jwt.POST("/tenants", tenantController.CreateTenant)
+	jwt.GET("/bills", billsControlerr.GetBillDetail)
+	jwt.GET("/organizations/:organization_id/bills", billsControlerr.GetOrganizationBills)
 
 	v1.GET("/products", productController.GetAll)
 	v1.GET("/products/:app_id", productController.GetByAppID)
