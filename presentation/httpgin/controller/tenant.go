@@ -62,7 +62,7 @@ func (c *TenantController) CreateTenant(ctx *gin.Context) {
 		return
 	}
 
-	bills, err := c.CreateTenantCommand.Execute(req)
+	res, err := c.CreateTenantCommand.Execute(req)
 	if err != nil {
 		ctx.JSON(500,
 			gin.H{
@@ -76,6 +76,6 @@ func (c *TenantController) CreateTenant(ctx *gin.Context) {
 		gin.H{
 			"status":  http.StatusCreated,
 			"message": "success",
-			"data":    bills.ID(),
+			"data":    res,
 		})
 }

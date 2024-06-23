@@ -7,18 +7,19 @@ import (
 )
 
 var (
-	JWT_SECRET = ""
-	PORT       = ""
-	RSAPUBKEY  = []byte("")
-	err        error
-	DB_HOST    = "localhost"
-	DB_USER    = "postgres"
-	DB_PASS    = "pgadmin123"
-	DB_NAME    = "billing"
-	DB_PORT    = "5432"
-	DB_SSL     = "disable"
-	IAM_HOST   = "https://api-iam.34d.me"
-	IAM_BEARER = "secret"
+	JWT_SECRET          = ""
+	PORT                = ""
+	RSAPUBKEY           = []byte("")
+	err                 error
+	DB_HOST             = "localhost"
+	DB_USER             = "postgres"
+	DB_PASS             = "pgadmin123"
+	DB_NAME             = "billing"
+	DB_PORT             = "5432"
+	DB_SSL              = "disable"
+	IAM_HOST            = "https://api-iam.34d.me"
+	IAM_BEARER          = "secret"
+	MIDTRANS_SERVER_KEY = "SB-Mid-server-4Q9Q6Q1Q9Q1Q"
 )
 
 func init() {
@@ -73,5 +74,9 @@ func init() {
 
 	if os.Getenv("IAM_BEARER") != "" {
 		IAM_BEARER = os.Getenv("IAM_BEARER")
+	}
+
+	if os.Getenv("MIDTRANS_SERVER_KEY") != "" {
+		MIDTRANS_SERVER_KEY = os.Getenv("MIDTRANS_SERVER_KEY")
 	}
 }

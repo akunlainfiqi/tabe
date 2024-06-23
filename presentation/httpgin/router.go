@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"saas-billing/app/commands"
 	"saas-billing/config"
+	midtransapi "saas-billing/infrastructures/api/midtrans"
 	"saas-billing/infrastructures/pgsql"
 	"saas-billing/presentation/httpgin/controller"
 	"saas-billing/presentation/httpgin/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/midtrans/midtrans-go"
+	"github.com/midtrans/midtrans-go/coreapi"
+	"github.com/midtrans/midtrans-go/snap"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -37,6 +41,10 @@ func New() *gin.Engine {
 	if err != nil {
 		panic(err)
 	}
+
+	s, c := initMidtrans()
+	midtransService := midtransapi.NewMidtrans(c, s)
+
 	v1 := r.Group("/v1")
 
 	productQueries := pgsql.NewProductQuery(pgclient)
@@ -56,7 +64,7 @@ func New() *gin.Engine {
 	createBillCommand := commands.NewCreateBillsCommand(billsRepository, tenantRepository, organizationRepository, transactionRepository, priceRepository)
 	createOrganizationCommand := commands.NewCreateOrganizationCommand(organizationRepository, iamOrganizationRepository)
 	createProductCommand := commands.NewCreateProductCommand(productRepository, appsRepository, priceRepository)
-	createTenantCommand := commands.NewCreateTenantOnboardingCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, iamOrganizationRepository)
+	createTenantCommand := commands.NewCreateTenantOnboardingCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, iamOrganizationRepository, midtransService)
 
 	expireBillCommand := commands.NewExpireBillsCommand(billsRepository)
 	payBillCommand := commands.NewPayBillsCommand(billsRepository, tenantRepository, transactionRepository)
@@ -102,4 +110,16 @@ func New() *gin.Engine {
 	v1.POST("/organizations", organizationController.Create)
 
 	return r
+}
+
+func initMidtrans() (*snap.Client, *coreapi.Client) {
+	midtransKey := config.MIDTRANS_SERVER_KEY
+
+	var s snap.Client
+	var c coreapi.Client
+
+	s.New(midtransKey, midtrans.Sandbox)
+	c.New(midtransKey, midtrans.Sandbox)
+
+	return &s, &c
 }

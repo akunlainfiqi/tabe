@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"saas-billing/app/services"
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
 	"saas-billing/errors"
@@ -40,6 +41,8 @@ type CreateTenantOnboardingCommand struct {
 	billsRepository        repositories.BillsRepository
 
 	iamOrganizationRepository repositories.IamOrganizationRepository
+
+	midtransService services.Midtrans
 }
 
 func NewCreateTenantOnboardingCommand(
@@ -48,6 +51,7 @@ func NewCreateTenantOnboardingCommand(
 	priceRepository repositories.PriceRepository,
 	billsRepository repositories.BillsRepository,
 	iamOrganizationRepository repositories.IamOrganizationRepository,
+	midtransService services.Midtrans,
 ) *CreateTenantOnboardingCommand {
 	return &CreateTenantOnboardingCommand{
 		tenantRepository:          tenantRepository,
@@ -55,10 +59,11 @@ func NewCreateTenantOnboardingCommand(
 		priceRepository:           priceRepository,
 		billsRepository:           billsRepository,
 		iamOrganizationRepository: iamOrganizationRepository,
+		midtransService:           midtransService,
 	}
 }
 
-func (c *CreateTenantOnboardingCommand) Execute(req *CreateTenantOnboardingRequest) (*entities.Bills, error) {
+func (c *CreateTenantOnboardingCommand) Execute(req *CreateTenantOnboardingRequest) (interface{}, error) {
 	isOrganizationOwner := c.iamOrganizationRepository.IsOwner(req.organizationId, req.userId)
 	if !isOrganizationOwner {
 		return nil, errors.ErrUnauthorized
@@ -102,5 +107,10 @@ func (c *CreateTenantOnboardingCommand) Execute(req *CreateTenantOnboardingReque
 		return nil, err
 	}
 
-	return bill, nil
+	res, err := c.midtransService.CreateTransaction(bill.ID(), bill.Total())
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }

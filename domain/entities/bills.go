@@ -120,6 +120,9 @@ func (b *Bills) IsOverdue() bool {
 	return b.dueDate < time.Now().Unix()
 }
 
+func (b *Bills) Total() int64 {
+	return b.amount - b.balanceUsed
+}
 func (b *Bills) Amount() int64 {
 	return b.amount
 }
