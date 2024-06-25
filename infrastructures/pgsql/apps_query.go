@@ -20,7 +20,8 @@ func (q *AppQuery) GetAll() ([]queries.App, error) {
 	if err := q.db.Raw(`
 		SELECT
 			id,
-			name
+			name,
+			image_url
 		FROM
 			apps
 	`).Scan(&apps).Error; err != nil {
