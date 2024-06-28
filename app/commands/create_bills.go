@@ -10,17 +10,17 @@ import (
 
 // CreateBillsRequest is a request for creating bills
 type CreateBillsRequest struct {
-	tenantId            string
-	useRemainingCredits bool
+	tenantId string
+	billType string
 }
 
 func NewCreateBillsRequest(
 	tenantId string,
-	useRemainingCredits bool,
+	billType string,
 ) *CreateBillsRequest {
 	return &CreateBillsRequest{
-		tenantId:            tenantId,
-		useRemainingCredits: useRemainingCredits,
+		tenantId: tenantId,
+		billType: billType,
 	}
 }
 
@@ -73,7 +73,7 @@ func (c *CreateBillsCommand) Execute(req *CreateBillsRequest) error {
 	}
 	balanceUsed := int64(0)
 
-	if req.useRemainingCredits {
+	if organization.Balance() > 0 {
 		if organization.Balance() < price.Price() {
 			balanceUsed = organization.Balance()
 		} else {
@@ -88,6 +88,7 @@ func (c *CreateBillsCommand) Execute(req *CreateBillsRequest) error {
 		price.Price(),
 		balanceUsed,
 		time.Now().AddDate(0, 0, 10).Unix(),
+		req.billType,
 	)
 	if err != nil {
 		return err

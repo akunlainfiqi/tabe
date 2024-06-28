@@ -11,6 +11,7 @@ type Transaction struct {
 
 var (
 	TransactionTypeBalance = "balance"
+	TransactionTypePayment = "payment"
 )
 
 func BuildTransaction(

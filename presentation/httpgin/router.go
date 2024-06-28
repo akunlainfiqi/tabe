@@ -67,13 +67,14 @@ func New() *gin.Engine {
 	createOrganizationCommand := commands.NewCreateOrganizationCommand(organizationRepository, iamOrganizationRepository)
 	createProductCommand := commands.NewCreateProductCommand(productRepository, appsRepository, priceRepository)
 	createTenantCommand := commands.NewCreateTenantOnboardingCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, iamOrganizationRepository, midtransService)
+	checkPaymentCommand := commands.NewCheckPayment(transactionRepository, billsRepository, organizationRepository, midtransService)
 
 	expireBillCommand := commands.NewExpireBillsCommand(billsRepository)
 	payBillCommand := commands.NewPayBillsCommand(billsRepository, tenantRepository, transactionRepository)
 
 	appControlerr := controller.NewAppController(appQuery)
 	productController := controller.NewProductController(productQueries, *createProductCommand)
-	billsControlerr := controller.NewBillController(*expireBillCommand, *payBillCommand, *createBillCommand, iamOrganizationQuery, billQueries)
+	billsControlerr := controller.NewBillController(*expireBillCommand, *payBillCommand, *createBillCommand, *checkPaymentCommand, iamOrganizationQuery, billQueries)
 	organizationController := controller.NewOrganizationController(*createOrganizationCommand)
 	tenantController := controller.NewTenantController(*createTenantCommand, tenantQueries)
 
@@ -111,6 +112,8 @@ func New() *gin.Engine {
 
 	v1.POST("/bills/expire", billsControlerr.InternalExpire)
 	v1.POST("/bills/pay", billsControlerr.InternalPay)
+	v1.GET("/bills/checkall", billsControlerr.InternalCheckPayment)
+	v1.POST("/bills/callback", billsControlerr.PaymentCallback)
 
 	v1.POST("/organizations", organizationController.Create)
 

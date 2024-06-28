@@ -13,6 +13,7 @@ type Bills struct {
 	amount         int64
 	balanceUsed    int64
 	dueDate        int64
+	billType       string
 }
 
 const (
@@ -20,6 +21,12 @@ const (
 	BillStatusPaid           = "paid"
 	BillStatusOverdue        = "overdue"
 	BillStatusCancelled      = "cancelled"
+)
+
+const (
+	BillTypeNewSubscription = "new_subscription"
+	BillTypeRenewal         = "renewal"
+	BillTypeAddBalance      = "add_balance"
 )
 
 func BuildBills(
@@ -30,6 +37,7 @@ func BuildBills(
 	amount,
 	balanceUsed,
 	dueDate int64,
+	billType string,
 ) *Bills {
 	return &Bills{
 		id:             id,
@@ -39,6 +47,7 @@ func BuildBills(
 		amount:         amount,
 		balanceUsed:    balanceUsed,
 		dueDate:        dueDate,
+		billType:       billType,
 	}
 }
 
@@ -49,6 +58,7 @@ func NewBills(
 	amount,
 	balanceUsed,
 	dueDate int64,
+	billType string,
 ) (*Bills, error) {
 	var billStatus string
 	if balanceUsed == 0 {
@@ -63,6 +73,10 @@ func NewBills(
 	if balanceUsed > 0 && balanceUsed > amount {
 		return nil, errors.ErrInvalidBillAmount
 	}
+
+	if billType != BillTypeNewSubscription && billType != BillTypeRenewal && billType != BillTypeAddBalance {
+		return nil, errors.ErrInvalidBillType
+	}
 	return &Bills{
 		id:             id,
 		organizationId: organizationId,
@@ -71,6 +85,7 @@ func NewBills(
 		status:         billStatus,
 		balanceUsed:    balanceUsed,
 		dueDate:        dueDate,
+		billType:       billType,
 	}, nil
 }
 
@@ -108,6 +123,10 @@ func (b *Bills) Pay(amount int64) error {
 	return nil
 }
 
+func (b *Bills) Settle() {
+	b.status = BillStatusPaid
+}
+
 func (b *Bills) Cancel() {
 	b.status = BillStatusCancelled
 }
@@ -133,4 +152,8 @@ func (b *Bills) BalanceUsed() int64 {
 
 func (b *Bills) DueDate() int64 {
 	return b.dueDate
+}
+
+func (b *Bills) BillType() string {
+	return b.billType
 }

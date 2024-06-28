@@ -18,6 +18,47 @@ func NewOrganizationRepository(db *gorm.DB) repositories.OrganizationRepository 
 }
 
 // FindByID finds an organization by its ID
+func (or *OrganizationRepository) FindByID(id string) (*entities.Organization, error) {
+	var dto struct {
+		ID             string
+		Name           string
+		Identifier     string
+		Balance        int64
+		ContactName    string
+		ContactEmail   string
+		ContactPhone   string
+		ContactAddress string
+	}
+
+	if err := or.db.Raw(`
+		SELECT
+			id,
+			name,
+			identifier,
+			balance,
+			contact_name,
+			contact_email,
+			contact_phone,
+			contact_address
+		FROM
+			organizations
+		WHERE
+			id = @id
+	`, map[string]interface{}{
+		"id": id,
+	}).Scan(&dto); err != nil {
+		return nil, err.Error
+	}
+
+	if dto.ID == "" {
+		return nil, nil
+	}
+
+	organization := entities.BuildOrganization(dto.ID, dto.Name, dto.Identifier, dto.Balance, dto.ContactName, dto.ContactEmail, dto.ContactPhone, dto.ContactAddress)
+
+	return organization, nil
+}
+
 func (or *OrganizationRepository) GetByID(id string) (*entities.Organization, error) {
 	var dto struct {
 		ID             string

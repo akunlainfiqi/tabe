@@ -74,13 +74,26 @@ func (c *CreateTenantOnboardingCommand) Execute(req *CreateTenantOnboardingReque
 		return nil, err
 	}
 
+	org, err := c.organizationRepository.FindByID(organization.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if org == nil {
+		org := entities.NewOrganization(organization.ID, organization.Name, organization.Identifier, "", "", "", "")
+
+		if err := c.organizationRepository.Create(org); err != nil {
+			return nil, err
+		}
+	}
+
 	price, err := c.priceRepository.GetByID(req.priceId)
 	if err != nil {
 		return nil, err
 	}
 
 	product := price.Product()
-	
+
 	tenant := entities.NewTenant(req.tenantId, req.tenantName, product.ID(), organization.ID, price.ID())
 
 	if err := c.tenantRepository.Create(tenant); err != nil {
@@ -98,7 +111,8 @@ func (c *CreateTenantOnboardingCommand) Execute(req *CreateTenantOnboardingReque
 		tenant.ID(),
 		price.Price(),
 		0,
-		time.Now().AddDate(0, 0, 10).Unix(),
+		time.Now().Add(1*time.Hour).Unix(),
+		entities.BillTypeNewSubscription,
 	)
 	if err != nil {
 		return nil, err

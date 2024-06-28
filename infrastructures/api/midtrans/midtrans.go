@@ -27,6 +27,10 @@ func (m *midtransService) CreateTransaction(orderID string, grossAmount int64) (
 			OrderID:  orderID,
 			GrossAmt: grossAmount,
 		},
+		Expiry: &snap.ExpiryDetails{
+			Unit:     "hour",
+			Duration: 1,
+		},
 	})
 
 	if err != nil {

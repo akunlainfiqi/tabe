@@ -11,6 +11,10 @@ var (
 		Code:    1001,
 		Message: "invalid_bill_amount",
 	})
+	ErrInvalidBillType = NewInvariant(InvariantParam{
+		Code:    1002,
+		Message: "invalid_bill_type",
+	})
 )
 
 var (

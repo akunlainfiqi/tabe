@@ -72,7 +72,7 @@ func (c *PayBillsCommand) Execute(req *PayBillsRequest) error {
 		return err
 	}
 
-	bills.SetStatus(entities.BillStatusPaid)
+	bills.Settle()
 
 	if err := c.billsRepository.Update(bills); err != nil {
 		return err
