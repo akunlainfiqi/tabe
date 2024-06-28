@@ -30,7 +30,7 @@ func (or *OrganizationRepository) FindByID(id string) (*entities.Organization, e
 		ContactAddress string
 	}
 
-	if err := or.db.Raw(`
+	tx := or.db.Raw(`
 		SELECT
 			id,
 			name,
@@ -46,8 +46,10 @@ func (or *OrganizationRepository) FindByID(id string) (*entities.Organization, e
 			id = @id
 	`, map[string]interface{}{
 		"id": id,
-	}).Scan(&dto); err != nil {
-		return nil, err.Error
+	}).Scan(&dto)
+
+	if tx.Error != nil {
+		return nil, tx.Error
 	}
 
 	if dto.ID == "" {

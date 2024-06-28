@@ -10,7 +10,6 @@ var (
 	JWT_SECRET          = ""
 	PORT                = ""
 	RSAPUBKEY           = []byte("")
-	err                 error
 	DB_HOST             = "localhost"
 	DB_USER             = "postgres"
 	DB_PASS             = "pgadmin123"
@@ -20,6 +19,7 @@ var (
 	IAM_HOST            = "https://api-iam.34d.me"
 	IAM_BEARER          = "secret"
 	MIDTRANS_SERVER_KEY = "SB-Mid-server-4Q9Q6Q1Q9Q1Q"
+	PROJECT_ID          = "saas-billing"
 )
 
 func init() {
@@ -34,15 +34,6 @@ func init() {
 	if PORT == "" {
 		panic("PORT is not set")
 	}
-
-	// RSAPUBKEY, err = os.ReadFile("saasiam.pem")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// if RSAPUBKEY == nil {
-	// 	panic("RSA public key is not set")
-	// }
 
 	if os.Getenv("DB_HOST") != "" {
 		DB_HOST = os.Getenv("DB_HOST")
@@ -78,5 +69,9 @@ func init() {
 
 	if os.Getenv("MIDTRANS_SERVER_KEY") != "" {
 		MIDTRANS_SERVER_KEY = os.Getenv("MIDTRANS_SERVER_KEY")
+	}
+
+	if os.Getenv("PROJECT_ID") != "" {
+		PROJECT_ID = os.Getenv("PROJECT_ID")
 	}
 }

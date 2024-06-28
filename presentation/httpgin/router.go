@@ -6,6 +6,7 @@ import (
 	"saas-billing/config"
 	midtransapi "saas-billing/infrastructures/api/midtrans"
 	"saas-billing/infrastructures/pgsql"
+	"saas-billing/infrastructures/pubsuber"
 	"saas-billing/presentation/httpgin/controller"
 	"saas-billing/presentation/httpgin/middleware"
 
@@ -44,6 +45,7 @@ func New() *gin.Engine {
 
 	s, c := initMidtrans()
 	midtransService := midtransapi.NewMidtrans(c, s)
+	publisherService := pubsuber.NewPublisher()
 
 	v1 := r.Group("/v1")
 
@@ -67,7 +69,7 @@ func New() *gin.Engine {
 	createOrganizationCommand := commands.NewCreateOrganizationCommand(organizationRepository, iamOrganizationRepository)
 	createProductCommand := commands.NewCreateProductCommand(productRepository, appsRepository, priceRepository)
 	createTenantCommand := commands.NewCreateTenantOnboardingCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, iamOrganizationRepository, midtransService)
-	checkPaymentCommand := commands.NewCheckPayment(transactionRepository, billsRepository, organizationRepository, midtransService)
+	checkPaymentCommand := commands.NewCheckPayment(transactionRepository, billsRepository, organizationRepository, midtransService, publisherService)
 
 	expireBillCommand := commands.NewExpireBillsCommand(billsRepository)
 	payBillCommand := commands.NewPayBillsCommand(billsRepository, tenantRepository, transactionRepository)

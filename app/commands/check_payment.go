@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"saas-billing/app/services"
 	"saas-billing/domain/entities"
@@ -15,7 +16,8 @@ type CheckPaymentCommand struct {
 	billRepository        repositories.BillsRepository
 	orgRepository         repositories.OrganizationRepository
 
-	midtransService services.Midtrans
+	midtransService  services.Midtrans
+	publisherService services.Publisher
 }
 
 func NewCheckPayment(
@@ -23,12 +25,14 @@ func NewCheckPayment(
 	billRepository repositories.BillsRepository,
 	orgRepository repositories.OrganizationRepository,
 	midtransService services.Midtrans,
+	publisherService services.Publisher,
 ) *CheckPaymentCommand {
 	return &CheckPaymentCommand{
 		transactionRepository: transactionRepository,
 		billRepository:        billRepository,
 		orgRepository:         orgRepository,
 		midtransService:       midtransService,
+		publisherService:      publisherService,
 	}
 }
 
@@ -91,6 +95,20 @@ func (c *CheckPaymentCommand) checkBillById(bill *entities.Bills) error {
 		}
 
 		if err := c.transactionRepository.Create(tr); err != nil {
+			return err
+		}
+
+		pl := services.TenantPaidPayload{
+			TenantID:  bill.TenantID(),
+			Timestamp: time.Now(),
+		}
+
+		payload, err := json.Marshal(pl)
+		if err != nil {
+			return err
+		}
+
+		if err := c.publisherService.Publish("billing_paid", payload); err != nil {
 			return err
 		}
 

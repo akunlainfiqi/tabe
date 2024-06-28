@@ -42,7 +42,16 @@ func (r *billsRepository) GetByID(id string) (*entities.Bills, error) {
 		WHERE b.id = ?
 		`, id).Scan(&dto)
 
-	billing := entities.BuildBills(dto.ID, dto.OrganizationID, dto.TenantID, dto.Status, dto.DueDate, dto.Amount, dto.BalanceUsed, dto.BillType)
+	billing := entities.BuildBills(
+		dto.ID,
+		dto.OrganizationID,
+		dto.TenantID,
+		dto.Status,
+		dto.Amount,
+		dto.BalanceUsed,
+		dto.DueDate,
+		dto.BillType,
+	)
 
 	if billing.ID() == "" {
 		return nil, errors.ErrBillsNotFound
