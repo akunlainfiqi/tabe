@@ -293,7 +293,7 @@ func (c *BillController) PaymentCallback(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.CheckPaymentCommand.Execute(); err != nil {
+	if err := c.CheckPaymentCommand.CheckBillById(params.OrderID); err != nil {
 		ctx.JSON(500,
 			gin.H{
 				"status":  http.StatusInternalServerError,
