@@ -15,7 +15,7 @@ func NewProductQuery(db *gorm.DB) queries.ProductQuery {
 }
 
 type ProductDTO struct {
-	ID         string
+	PriceID    string
 	Price      int64
 	Reccurence string
 	ProductId  string
@@ -31,10 +31,10 @@ func (pq *productQuery) FindByID(id string) (queries.Product, error) {
 
 	if err := pq.db.Raw(`
 		SELECT
-			pr.id,
+			pr.id as price_id,
 			pr.price,
 			pr.reccurence,
-			p.id,
+			p.id as product_id,
 			p.app_id,
 			a.name,
 			p.tier_name,
@@ -59,14 +59,14 @@ func (pq *productQuery) FindByID(id string) (queries.Product, error) {
 	var price []queries.Price
 	for _, t := range temp {
 		price = append(price, queries.Price{
-			ID:         t.ID,
+			ID:         t.PriceID,
 			ProductId:  t.ProductId,
 			Price:      t.Price,
 			Reccurence: t.Reccurence,
 		})
 
 		product = queries.Product{
-			ID:        t.ID,
+			ID:        t.PriceID,
 			AppId:     t.AppID,
 			Name:      t.Name,
 			TierName:  t.TierName,
@@ -84,10 +84,10 @@ func (pq *productQuery) FindAll() ([]queries.Product, error) {
 
 	if err := pq.db.Raw(`
 		SELECT
-			pr.id,
+			pr.id as price_id,
 			pr.price,
 			pr.reccurence,
-			p.id,
+			p.id as product_id,
 			p.app_id,
 			a.name,
 			p.tier_name,
@@ -111,7 +111,7 @@ func (pq *productQuery) FindAll() ([]queries.Product, error) {
 
 	for _, t := range temp {
 		price := queries.Price{
-			ID:         t.ID,
+			ID:         t.PriceID,
 			ProductId:  t.ProductId,
 			Price:      t.Price,
 			Reccurence: t.Reccurence,
@@ -119,7 +119,7 @@ func (pq *productQuery) FindAll() ([]queries.Product, error) {
 
 		productExists = false
 		for i, p := range products {
-			if p.ID == t.ID {
+			if p.ID == t.ProductId {
 				products[i].Price = append(products[i].Price, price)
 				productExists = true
 				break
@@ -129,7 +129,7 @@ func (pq *productQuery) FindAll() ([]queries.Product, error) {
 		if !productExists {
 			// Product does not exist, create a new one
 			product := queries.Product{
-				ID:        t.ID,
+				ID:        t.ProductId,
 				AppId:     t.AppID,
 				Name:      t.Name,
 				TierName:  t.TierName,
@@ -150,10 +150,10 @@ func (pq *productQuery) FindByAppID(appID string) ([]queries.Product, error) {
 
 	if err := pq.db.Raw(`
 		SELECT
-			pr.id,
+			pr.id as price_id,
 			pr.price,
 			pr.reccurence,
-			p.id,
+			p.id as product_id,
 			p.app_id,
 			a.name,
 			p.tier_name,
@@ -179,7 +179,7 @@ func (pq *productQuery) FindByAppID(appID string) ([]queries.Product, error) {
 
 	for _, t := range temp {
 		price := queries.Price{
-			ID:         t.ID,
+			ID:         t.PriceID,
 			ProductId:  t.ProductId,
 			Price:      t.Price,
 			Reccurence: t.Reccurence,
@@ -187,7 +187,7 @@ func (pq *productQuery) FindByAppID(appID string) ([]queries.Product, error) {
 
 		productExists = false
 		for i, p := range products {
-			if p.ID == t.ID {
+			if p.ID == t.ProductId {
 				products[i].Price = append(products[i].Price, price)
 				productExists = true
 				break
@@ -197,7 +197,7 @@ func (pq *productQuery) FindByAppID(appID string) ([]queries.Product, error) {
 		if !productExists {
 			// Product does not exist, create a new one
 			product := queries.Product{
-				ID:        t.ID,
+				ID:        t.ProductId,
 				AppId:     t.AppID,
 				Name:      t.Name,
 				TierName:  t.TierName,

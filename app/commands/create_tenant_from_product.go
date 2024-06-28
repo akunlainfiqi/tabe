@@ -80,6 +80,7 @@ func (c *CreateTenantOnboardingCommand) Execute(req *CreateTenantOnboardingReque
 	}
 
 	product := price.Product()
+	
 	tenant := entities.NewTenant(req.tenantId, req.tenantName, product.ID(), organization.ID, price.ID())
 
 	if err := c.tenantRepository.Create(tenant); err != nil {

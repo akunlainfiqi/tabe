@@ -51,6 +51,7 @@ func New() *gin.Engine {
 	iamOrganizationQuery := pgsql.NewIamUserOrganizationQuery(iampgclient)
 	billQueries := pgsql.NewBillQuery(pgclient)
 	productQueries := pgsql.NewProductQuery(pgclient)
+	tenantQueries := pgsql.NewTenantQuery(pgclient)
 
 	appsRepository := pgsql.NewAppsRepository(pgclient)
 	billsRepository := pgsql.NewBillsRepository(pgclient)
@@ -74,7 +75,7 @@ func New() *gin.Engine {
 	productController := controller.NewProductController(productQueries, *createProductCommand)
 	billsControlerr := controller.NewBillController(*expireBillCommand, *payBillCommand, *createBillCommand, iamOrganizationQuery, billQueries)
 	organizationController := controller.NewOrganizationController(*createOrganizationCommand)
-	tenantController := controller.NewTenantController(*createTenantCommand)
+	tenantController := controller.NewTenantController(*createTenantCommand, tenantQueries)
 
 	v1.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -100,7 +101,8 @@ func New() *gin.Engine {
 
 	jwt.POST("/tenants", tenantController.CreateTenant)
 	jwt.GET("/bills", billsControlerr.GetBillDetail)
-	jwt.GET("/organizations/:organization_id/bills", billsControlerr.GetOrganizationBills)
+	jwt.GET("/organizations/:org_id/bills", billsControlerr.GetOrganizationBills)
+	jwt.GET("/organizations/:org_id/tenants", tenantController.GetByOrgID)
 
 	v1.GET("/apps", appControlerr.GetAll)
 	v1.GET("/products", productController.GetAll)

@@ -214,7 +214,7 @@ func (c *BillController) GetOrganizationBills(ctx *gin.Context) {
 		return
 	}
 
-	organizationID := ctx.Param("organization_id")
+	organizationID := ctx.Param("org_id")
 	if organizationID == "" {
 		ctx.JSON(400,
 			gin.H{

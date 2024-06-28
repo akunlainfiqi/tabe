@@ -3,19 +3,26 @@ package controller
 import (
 	"net/http"
 	"saas-billing/app/commands"
+	"saas-billing/app/queries"
 
 	"github.com/gin-gonic/gin"
 )
 
 type TenantController struct {
 	CreateTenantCommand commands.CreateTenantOnboardingCommand
+
+	TenantQuery queries.TenantQuery
 }
 
 func NewTenantController(
 	createTenantCommand commands.CreateTenantOnboardingCommand,
+
+	tenantQuery queries.TenantQuery,
 ) *TenantController {
 	return &TenantController{
 		CreateTenantCommand: createTenantCommand,
+
+		TenantQuery: tenantQuery,
 	}
 }
 
@@ -77,5 +84,83 @@ func (c *TenantController) CreateTenant(ctx *gin.Context) {
 			"status":  http.StatusCreated,
 			"message": "success",
 			"data":    res,
+		})
+}
+
+func (c *TenantController) GetTenant(ctx *gin.Context) {
+	userId := ctx.GetString("user_id")
+	if userId == "" {
+		ctx.JSON(401,
+			gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "Unauthorized",
+			})
+		return
+	}
+
+	id := ctx.Param("id")
+	if id == "" {
+		ctx.JSON(400,
+			gin.H{
+				"status":  http.StatusBadRequest,
+				"message": "id is required",
+			})
+		return
+	}
+
+	tenant, err := c.TenantQuery.FindByID(id)
+	if err != nil {
+		ctx.JSON(500,
+			gin.H{
+				"status":  http.StatusInternalServerError,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	ctx.JSON(200,
+		gin.H{
+			"status":  http.StatusOK,
+			"message": "success",
+			"data":    tenant,
+		})
+}
+
+func (c *TenantController) GetByOrgID(ctx *gin.Context) {
+	userId := ctx.GetString("user_id")
+	if userId == "" {
+		ctx.JSON(401,
+			gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "Unauthorized",
+			})
+		return
+	}
+
+	orgId := ctx.Param("org_id")
+	if orgId == "" {
+		ctx.JSON(400,
+			gin.H{
+				"status":  http.StatusBadRequest,
+				"message": "org_id is required",
+			})
+		return
+	}
+
+	tenants, err := c.TenantQuery.FindByOrgID(orgId)
+	if err != nil {
+		ctx.JSON(500,
+			gin.H{
+				"status":  http.StatusInternalServerError,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	ctx.JSON(200,
+		gin.H{
+			"status":  http.StatusOK,
+			"message": "success",
+			"data":    tenants,
 		})
 }
