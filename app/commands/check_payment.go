@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"saas-billing/app/services"
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
@@ -37,6 +38,7 @@ func NewCheckPayment(
 		billRepository:        billRepository,
 		orgRepository:         orgRepository,
 		tenantRepository:      tenantRepository,
+		priceRepository:       priceRepository,
 
 		midtransService:  midtransService,
 		publisherService: publisherService,
@@ -100,6 +102,8 @@ func (c *CheckPaymentCommand) checkBillById(bill *entities.Bills) error {
 		if err != nil {
 			return err
 		}
+
+		log.Print(tenant.PriceID())
 
 		price, err := c.priceRepository.GetByID(tenant.PriceID())
 		if err != nil {
