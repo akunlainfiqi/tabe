@@ -17,7 +17,7 @@ func NewTenantQuery(db *gorm.DB) queries.TenantQuery {
 type TenantDTO struct {
 	ID             string
 	Name           string
-	ProductID      string
+	AppID          string
 	OrganizationId string
 	ActiveUntil    string
 	CreatedAt      string
@@ -31,7 +31,7 @@ func (tq *tenantQuery) FindByID(id string) (queries.Tenant, error) {
 		SELECT
 			t.id,
 			t.name,
-			t.product_id,
+			t.app_id,
 			t.organization_id,
 			t.active_until,
 			t.created_at
@@ -47,7 +47,7 @@ func (tq *tenantQuery) FindByID(id string) (queries.Tenant, error) {
 	for _, t := range temp {
 		tenant.ID = t.ID
 		tenant.Name = t.Name
-		tenant.ProductID = t.ProductID
+		tenant.AppID = t.AppID
 		tenant.OrgID = t.OrganizationId
 		tenant.ActiveUntil = t.ActiveUntil
 		tenant.CreatedAt = t.CreatedAt
@@ -64,7 +64,7 @@ func (tq *tenantQuery) FindByOrgID(orgID string) ([]queries.Tenant, error) {
 		SELECT
 			t.id,
 			t.name,
-			t.product_id,
+			t.app_id,
 			t.organization_id,
 			t.active_until,
 			t.created_at
@@ -81,7 +81,7 @@ func (tq *tenantQuery) FindByOrgID(orgID string) ([]queries.Tenant, error) {
 		tenant := queries.Tenant{}
 		tenant.ID = t.ID
 		tenant.Name = t.Name
-		tenant.ProductID = t.ProductID
+		tenant.AppID = t.AppID
 		tenant.OrgID = t.OrganizationId
 		tenant.ActiveUntil = t.ActiveUntil
 		tenant.CreatedAt = t.CreatedAt

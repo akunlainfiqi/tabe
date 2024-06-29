@@ -69,7 +69,8 @@ func New() *gin.Engine {
 	createOrganizationCommand := commands.NewCreateOrganizationCommand(organizationRepository, iamOrganizationRepository)
 	createProductCommand := commands.NewCreateProductCommand(productRepository, appsRepository, priceRepository)
 	createTenantCommand := commands.NewCreateTenantOnboardingCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, iamOrganizationRepository, midtransService)
-	checkPaymentCommand := commands.NewCheckPayment(transactionRepository, billsRepository, organizationRepository, midtransService, publisherService)
+	checkPaymentCommand := commands.NewCheckPayment(transactionRepository, billsRepository, organizationRepository, tenantRepository, priceRepository, midtransService, publisherService)
+	extendCTenantCommand := commands.NewExtendTenantCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, midtransService)
 
 	expireBillCommand := commands.NewExpireBillsCommand(billsRepository)
 	payBillCommand := commands.NewPayBillsCommand(billsRepository, tenantRepository, transactionRepository)
@@ -78,7 +79,7 @@ func New() *gin.Engine {
 	productController := controller.NewProductController(productQueries, *createProductCommand)
 	billsControlerr := controller.NewBillController(*expireBillCommand, *payBillCommand, *createBillCommand, *checkPaymentCommand, iamOrganizationQuery, billQueries)
 	organizationController := controller.NewOrganizationController(*createOrganizationCommand)
-	tenantController := controller.NewTenantController(*createTenantCommand, tenantQueries)
+	tenantController := controller.NewTenantController(*createTenantCommand, *extendCTenantCommand, tenantQueries)
 
 	v1.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{

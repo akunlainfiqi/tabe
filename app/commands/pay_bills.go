@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// TODO: implement payment gateway services
 type PayBillsRequest struct {
 	billId               string
 	transactionType      string
@@ -46,7 +45,7 @@ func (c *PayBillsCommand) Execute(req *PayBillsRequest) error {
 		return err
 	}
 
-	tenant, err := c.tenantRepository.GetById(bills.TenantID())
+	tenant, err := c.tenantRepository.GetByID(bills.TenantID())
 	if err != nil {
 		return err
 	}

@@ -3,7 +3,7 @@ package entities
 type Tenant struct {
 	id             string
 	name           string
-	productId      string
+	appID          string
 	organizationId string
 	activeUntil    int64
 	priceId        string
@@ -12,7 +12,7 @@ type Tenant struct {
 func BuildTenant(
 	id,
 	name,
-	productId,
+	appID,
 	organizationId,
 	priceId string,
 	activeUntil int64,
@@ -20,7 +20,7 @@ func BuildTenant(
 	return &Tenant{
 		id:             id,
 		name:           name,
-		productId:      productId,
+		appID:          appID,
 		organizationId: organizationId,
 		activeUntil:    activeUntil,
 		priceId:        priceId,
@@ -30,14 +30,14 @@ func BuildTenant(
 func NewTenant(
 	id,
 	name,
-	productId,
+	appID,
 	organizationId,
 	priceId string,
 ) *Tenant {
 	return &Tenant{
 		id:             id,
 		name:           name,
-		productId:      productId,
+		appID:          appID,
 		organizationId: organizationId,
 		activeUntil:    0,
 		priceId:        priceId,
@@ -52,8 +52,8 @@ func (t *Tenant) Name() string {
 	return t.name
 }
 
-func (t *Tenant) ProductID() string {
-	return t.productId
+func (t *Tenant) AppID() string {
+	return t.appID
 }
 
 func (t *Tenant) OrganizationID() string {

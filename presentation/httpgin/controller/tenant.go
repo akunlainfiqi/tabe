@@ -10,12 +10,14 @@ import (
 
 type TenantController struct {
 	CreateTenantCommand commands.CreateTenantOnboardingCommand
+	ExtendTenantCommand commands.ExtendTenantCommand
 
 	TenantQuery queries.TenantQuery
 }
 
 func NewTenantController(
 	createTenantCommand commands.CreateTenantOnboardingCommand,
+	ExtendTenantCommand commands.ExtendTenantCommand,
 
 	tenantQuery queries.TenantQuery,
 ) *TenantController {
@@ -162,5 +164,52 @@ func (c *TenantController) GetByOrgID(ctx *gin.Context) {
 			"status":  http.StatusOK,
 			"message": "success",
 			"data":    tenants,
+		})
+}
+
+func (c *TenantController) ExtendTenant(ctx *gin.Context) {
+	userId := ctx.GetString("user_id")
+	if userId == "" {
+		ctx.JSON(401,
+			gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "Unauthorized",
+			})
+		return
+	}
+
+	var params struct {
+		TenantId string `json:"tenant_id" binding:"required"`
+	}
+
+	if err := ctx.ShouldBind(&params); err != nil {
+		ctx.JSON(400,
+			gin.H{
+				"status":  http.StatusBadRequest,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	req := &commands.ExtendTenantCommandRequest{
+		TenantID: params.TenantId,
+		UserID:   userId,
+	}
+
+	res, err := c.ExtendTenantCommand.Do(req)
+	if err != nil {
+		ctx.JSON(500,
+			gin.H{
+				"status":  http.StatusInternalServerError,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	ctx.JSON(201,
+		gin.H{
+			"status":  http.StatusCreated,
+			"message": "success",
+			"data":    res,
 		})
 }

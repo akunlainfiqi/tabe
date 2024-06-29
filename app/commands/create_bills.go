@@ -52,7 +52,7 @@ func NewCreateBillsCommand(
 
 // Execute executes the create bills command
 func (c *CreateBillsCommand) Execute(req *CreateBillsRequest) error {
-	tenant, err := c.tenantRepository.GetById(req.tenantId)
+	tenant, err := c.tenantRepository.GetByID(req.tenantId)
 	if err != nil {
 		return err
 	}

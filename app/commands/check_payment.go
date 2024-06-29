@@ -15,6 +15,8 @@ type CheckPaymentCommand struct {
 	transactionRepository repositories.TransactionRepository
 	billRepository        repositories.BillsRepository
 	orgRepository         repositories.OrganizationRepository
+	tenantRepository      repositories.TenantRepository
+	priceRepository       repositories.PriceRepository
 
 	midtransService  services.Midtrans
 	publisherService services.Publisher
@@ -24,6 +26,9 @@ func NewCheckPayment(
 	transactionRepository repositories.TransactionRepository,
 	billRepository repositories.BillsRepository,
 	orgRepository repositories.OrganizationRepository,
+	tenantRepository repositories.TenantRepository,
+	priceRepository repositories.PriceRepository,
+
 	midtransService services.Midtrans,
 	publisherService services.Publisher,
 ) *CheckPaymentCommand {
@@ -31,8 +36,10 @@ func NewCheckPayment(
 		transactionRepository: transactionRepository,
 		billRepository:        billRepository,
 		orgRepository:         orgRepository,
-		midtransService:       midtransService,
-		publisherService:      publisherService,
+		tenantRepository:      tenantRepository,
+
+		midtransService:  midtransService,
+		publisherService: publisherService,
 	}
 }
 
@@ -76,11 +83,6 @@ func (c *CheckPaymentCommand) checkBillById(bill *entities.Bills) error {
 			return err
 		}
 
-		bill.Settle()
-		if err := c.billRepository.Update(bill); err != nil {
-			return err
-		}
-
 		tr, err := entities.NewTransaction(
 			id.String(),
 			bill.ID(),
@@ -91,6 +93,40 @@ func (c *CheckPaymentCommand) checkBillById(bill *entities.Bills) error {
 		)
 
 		if err != nil {
+			return err
+		}
+
+		tenant, err := c.tenantRepository.GetByID(bill.TenantID())
+		if err != nil {
+			return err
+		}
+
+		price, err := c.priceRepository.GetByID(tenant.PriceID())
+		if err != nil {
+			return err
+		}
+
+		if bill.BillType() == entities.BillTypeNewSubscription {
+			if price.Recurrence() == entities.ProductRecurrenceMonthly {
+				tenant.SetActiveUntil(time.Now().AddDate(0, 1, 0).Unix())
+			} else if price.Recurrence() == entities.ProductRecurrenceYearly {
+				tenant.SetActiveUntil(time.Now().AddDate(1, 0, 0).Unix())
+			}
+		} else if bill.BillType() == entities.BillTypeRenewal {
+			if price.Recurrence() == entities.ProductRecurrenceMonthly {
+				tenant.SetActiveUntil(time.Unix(tenant.ActiveUntil(), 0).AddDate(0, 1, 0).Unix())
+			} else if price.Recurrence() == entities.ProductRecurrenceYearly {
+				tenant.SetActiveUntil(time.Unix(tenant.ActiveUntil(), 0).AddDate(1, 0, 0).Unix())
+			}
+		}
+
+		if err := c.tenantRepository.Update(tenant); err != nil {
+			return err
+		}
+
+		bill.Settle()
+
+		if err := c.billRepository.Update(bill); err != nil {
 			return err
 		}
 

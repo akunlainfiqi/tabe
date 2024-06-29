@@ -18,11 +18,11 @@ func NewTenantRepository(db *gorm.DB) repositories.TenantRepository {
 }
 
 // GetById finds a tenant by its ID and throw an error if not found
-func (tr *TenantRepository) GetById(id string) (*entities.Tenant, error) {
+func (tr *TenantRepository) GetByID(id string) (*entities.Tenant, error) {
 	var dto struct {
 		ID             string
 		Name           string
-		ProductId      string
+		AppID          string
 		OrganizationId string
 		ActiveUntil    int64
 		PriceId        string
@@ -32,7 +32,7 @@ func (tr *TenantRepository) GetById(id string) (*entities.Tenant, error) {
 		SELECT
 			t.id,
 			t.name,
-			t.product_id,
+			t.app_id,
 			t.organization_id,
 			t.active_until,
 			t.price_id
@@ -40,7 +40,7 @@ func (tr *TenantRepository) GetById(id string) (*entities.Tenant, error) {
 		WHERE t.id = ?
 	`, id).Scan(&dto)
 
-	tenant := entities.BuildTenant(dto.ID, dto.Name, dto.ProductId, dto.OrganizationId, dto.PriceId, dto.ActiveUntil)
+	tenant := entities.BuildTenant(dto.ID, dto.Name, dto.AppID, dto.OrganizationId, dto.PriceId, dto.ActiveUntil)
 
 	if tenant.ID() == "" {
 		return nil, errors.ErrTenantNotFound
@@ -55,7 +55,7 @@ func (tr *TenantRepository) Create(tenant *entities.Tenant) error {
 			tenants (
 				id, 
 				name, 
-				product_id, 
+				app_id, 
 				organization_id, 
 				price_id, 
 				active_until, 
@@ -65,7 +65,7 @@ func (tr *TenantRepository) Create(tenant *entities.Tenant) error {
 		VALUES (
 			@id, 
 			@name, 
-			@product_id, 
+			@app_id, 
 			@organization_id, 
 			@price_id, 
 			@active_until, 
@@ -75,7 +75,7 @@ func (tr *TenantRepository) Create(tenant *entities.Tenant) error {
 	`, map[string]interface{}{
 		"id":              tenant.ID(),
 		"name":            tenant.Name(),
-		"product_id":      tenant.ProductID(),
+		"app_id":          tenant.AppID(),
 		"organization_id": tenant.OrganizationID(),
 		"price_id":        tenant.PriceID(),
 		"active_until":    tenant.ActiveUntil(),
@@ -91,7 +91,7 @@ func (tr *TenantRepository) Update(tenant *entities.Tenant) error {
 			tenants
 		SET 
 			name = @name, 
-			product_id = @product_id, 
+			app_id = @app_id, 
 			organization_id = @organization_id, 
 			price_id = @price_id, 
 			active_until = @active_until, 
@@ -101,7 +101,7 @@ func (tr *TenantRepository) Update(tenant *entities.Tenant) error {
 	`, map[string]interface{}{
 		"id":              tenant.ID(),
 		"name":            tenant.Name(),
-		"product_id":      tenant.ProductID(),
+		"app_id":          tenant.AppID(),
 		"organization_id": tenant.OrganizationID(),
 		"price_id":        tenant.PriceID(),
 		"active_until":    tenant.ActiveUntil(),
