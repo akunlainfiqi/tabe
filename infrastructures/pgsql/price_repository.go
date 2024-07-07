@@ -46,7 +46,7 @@ func (pr *PriceRepository) GetByID(id string) (*entities.Price, error) {
 		`, id).Scan(&dto)
 
 	app := entities.NewApps(dto.AppId, dto.AppName)
-	product := entities.NewProduct(dto.ProductId, *app, dto.TierName, dto.TierIndex)
+	product := entities.NewProduct(dto.ProductId, app, dto.TierName, dto.TierIndex)
 	price := entities.NewPrice(dto.ID, product, dto.Price, dto.Reccurence)
 
 	if price.ID() == "" {

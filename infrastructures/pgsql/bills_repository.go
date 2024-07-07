@@ -22,6 +22,7 @@ func (r *billsRepository) GetByID(id string) (*entities.Bills, error) {
 		ID             string
 		OrganizationID string
 		TenantID       string
+		PriceID        string
 		Status         string
 		DueDate        int64
 		Amount         int64
@@ -33,6 +34,7 @@ func (r *billsRepository) GetByID(id string) (*entities.Bills, error) {
 			b.id,
 			b.organization_id,
 			b.tenant_id,
+			b.price_id,
 			b.status,
 			b.due_date,
 			b.amount,
@@ -46,6 +48,7 @@ func (r *billsRepository) GetByID(id string) (*entities.Bills, error) {
 		dto.ID,
 		dto.OrganizationID,
 		dto.TenantID,
+		dto.PriceID,
 		dto.Status,
 		dto.Amount,
 		dto.BalanceUsed,
@@ -63,8 +66,8 @@ func (r *billsRepository) GetByID(id string) (*entities.Bills, error) {
 
 func (r *billsRepository) Create(billing *entities.Bills) error {
 	err := r.db.Exec(`
-		INSERT INTO bills (id, organization_id, tenant_id, status, due_date, amount, balance_used, bill_type, created_at, updated_at)
-		VALUES (@id, @organization_id, @tenant_id, @status, @due_date, @amount, @balance_used, @bill_type, @now, @now)
+		INSERT INTO bills (id, organization_id, tenant_id, status, due_date, amount, balance_used, bill_type, price_id, created_at, updated_at)
+		VALUES (@id, @organization_id, @tenant_id, @status, @due_date, @amount, @balance_used, @bill_type, @price_id, @now, @now)
 	`, map[string]interface{}{
 		"id":              billing.ID(),
 		"organization_id": billing.OrganizationID(),
@@ -74,6 +77,7 @@ func (r *billsRepository) Create(billing *entities.Bills) error {
 		"amount":          billing.Amount(),
 		"balance_used":    billing.BalanceUsed(),
 		"bill_type":       billing.BillType(),
+		"price_id":        billing.PriceID(),
 		"now":             time.Now().Unix(),
 	}).Error
 	if err != nil {
@@ -93,6 +97,7 @@ func (r *billsRepository) Update(billing *entities.Bills) error {
 			amount = @amount,
 			balance_used = @balance_used,
 			bill_type = @bill_type,
+			price_id = @price_id,
 			updated_at = @now
 		WHERE id = @id
 	`, map[string]interface{}{
@@ -104,6 +109,7 @@ func (r *billsRepository) Update(billing *entities.Bills) error {
 		"amount":          billing.Amount(),
 		"balance_used":    billing.BalanceUsed(),
 		"bill_type":       billing.BillType(),
+		"price_id":        billing.PriceID(),
 		"now":             time.Now().Unix(),
 	}).Error
 	return err
@@ -114,6 +120,7 @@ func (r *billsRepository) GetUnpaidBillsAfterDueDate() ([]*entities.Bills, error
 		ID             string
 		OrganizationID string
 		TenantID       string
+		PriceID        string
 		Status         string
 		DueDate        int64
 		Amount         int64
@@ -125,6 +132,7 @@ func (r *billsRepository) GetUnpaidBillsAfterDueDate() ([]*entities.Bills, error
 			b.id,
 			b.organization_id,
 			b.tenant_id,
+			b.price_id,
 			b.status,
 			b.due_date,
 			b.amount,
@@ -140,11 +148,13 @@ func (r *billsRepository) GetUnpaidBillsAfterDueDate() ([]*entities.Bills, error
 			dto.ID,
 			dto.OrganizationID,
 			dto.TenantID,
+			dto.PriceID,
 			dto.Status,
 			dto.Amount,
 			dto.BalanceUsed,
 			dto.DueDate,
-			dto.BillType))
+			dto.BillType),
+		)
 	}
 
 	return billings, nil

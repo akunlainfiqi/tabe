@@ -89,8 +89,8 @@ func (or *OrganizationRepository) GetByID(id string) (*entities.Organization, er
 			id = @id
 	`, map[string]interface{}{
 		"id": id,
-	}).Scan(&dto); err != nil {
-		return nil, err.Error
+	}).Scan(&dto).Error; err != nil {
+		return nil, err
 	}
 
 	if dto.ID == "" {

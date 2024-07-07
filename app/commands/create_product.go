@@ -59,7 +59,7 @@ func (c *CreateProductCommand) Execute(req *CreateProductRequest) error {
 	}
 
 	for _, tier := range req.tiers {
-		product := entities.NewProduct(uuid.New().String(), *app, tier.Name, tier.Order)
+		product := entities.NewProduct(uuid.New().String(), app, tier.Name, tier.Order)
 
 		if err := c.productRepository.Create(product); err != nil {
 			return err

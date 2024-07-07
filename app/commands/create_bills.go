@@ -85,6 +85,7 @@ func (c *CreateBillsCommand) Execute(req *CreateBillsRequest) error {
 		billId.String(),
 		organization.ID(),
 		tenant.ID(),
+		price.ID(),
 		price.Price(),
 		balanceUsed,
 		time.Now().AddDate(0, 0, 10).Unix(),

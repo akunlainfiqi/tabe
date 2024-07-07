@@ -5,62 +5,105 @@ import (
 	"time"
 )
 
+type BillType string
+type BillStatus string
+
+const (
+	BillStatusWaitingPayment BillStatus = "waiting_payment"
+	BillStatusPaid           BillStatus = "paid"
+	BillStatusOverdue        BillStatus = "overdue"
+	BillStatusCancelled      BillStatus = "cancelled"
+)
+
+func mapBillStatus(status string) (BillStatus, error) {
+	switch status {
+	case "waiting_payment":
+		return BillStatusWaitingPayment, nil
+	case "paid":
+		return BillStatusPaid, nil
+	case "overdue":
+		return BillStatusOverdue, nil
+	case "cancelled":
+		return BillStatusCancelled, nil
+	default:
+		return "", errors.ErrInvalidBillStatus
+	}
+}
+
 type Bills struct {
 	id             string
 	organizationId string
 	tenantId       string
-	status         string
+	priceId        string
+	status         BillStatus
 	amount         int64
 	balanceUsed    int64
 	dueDate        int64
-	billType       string
+	billType       BillType
 }
 
 const (
-	BillStatusWaitingPayment = "waiting_payment"
-	BillStatusPaid           = "paid"
-	BillStatusOverdue        = "overdue"
-	BillStatusCancelled      = "cancelled"
+	BillTypeNewSubscription BillType = "new_subscription"
+	BillTypeRenewal         BillType = "renewal"
+	BillTypeUpgrade         BillType = "upgrade"
+	BillTypeDowngrade       BillType = "downgrade"
+	BillTypeAddBalance      BillType = "add_balance"
 )
 
-const (
-	BillTypeNewSubscription = "new_subscription"
-	BillTypeRenewal         = "renewal"
-	BillTypeAddBalance      = "add_balance"
-)
+func mapBillType(billType string) (BillType, error) {
+	switch billType {
+	case "new_subscription":
+		return BillTypeNewSubscription, nil
+	case "renewal":
+		return BillTypeRenewal, nil
+	case "upgrade":
+		return BillTypeUpgrade, nil
+	case "downgrade":
+		return BillTypeDowngrade, nil
+	case "add_balance":
+		return BillTypeAddBalance, nil
+	default:
+		return "", errors.ErrInvalidBillType
+	}
+}
 
 func BuildBills(
 	id,
 	organizationId,
 	tenantId,
+	priceId string,
 	status string,
 	amount,
 	balanceUsed,
 	dueDate int64,
 	billType string,
 ) *Bills {
+	BillStatus, _ := mapBillStatus(status)
+	billTypes, _ := mapBillType(billType)
 	return &Bills{
 		id:             id,
 		organizationId: organizationId,
 		tenantId:       tenantId,
-		status:         status,
+		priceId:        priceId,
+		status:         BillStatus,
 		amount:         amount,
 		balanceUsed:    balanceUsed,
 		dueDate:        dueDate,
-		billType:       billType,
+		billType:       billTypes,
 	}
 }
 
 func NewBills(
 	id,
 	organizationId,
-	tenantId string,
+	tenantId,
+	priceId string,
 	amount,
 	balanceUsed,
 	dueDate int64,
 	billType string,
 ) (*Bills, error) {
-	var billStatus string
+	var billStatus BillStatus
 	if balanceUsed == 0 {
 		billStatus = BillStatusWaitingPayment
 	}
@@ -74,18 +117,21 @@ func NewBills(
 		return nil, errors.ErrInvalidBillAmount
 	}
 
-	if billType != BillTypeNewSubscription && billType != BillTypeRenewal && billType != BillTypeAddBalance {
-		return nil, errors.ErrInvalidBillType
+	billTypes, err := mapBillType(billType)
+	if err != nil {
+		return nil, err
 	}
+
 	return &Bills{
 		id:             id,
 		organizationId: organizationId,
 		tenantId:       tenantId,
-		amount:         amount,
+		priceId:        priceId,
 		status:         billStatus,
-		balanceUsed:    balanceUsed,
 		dueDate:        dueDate,
-		billType:       billType,
+		amount:         amount,
+		balanceUsed:    balanceUsed,
+		billType:       billTypes,
 	}, nil
 }
 
@@ -101,11 +147,11 @@ func (b *Bills) TenantID() string {
 	return b.tenantId
 }
 
-func (b *Bills) Status() string {
+func (b *Bills) Status() BillStatus {
 	return b.status
 }
 
-func (b *Bills) SetStatus(status string) {
+func (b *Bills) SetStatus(status BillStatus) {
 	b.status = status
 }
 
@@ -154,6 +200,10 @@ func (b *Bills) DueDate() int64 {
 	return b.dueDate
 }
 
-func (b *Bills) BillType() string {
+func (b *Bills) BillType() BillType {
 	return b.billType
+}
+
+func (b *Bills) PriceID() string {
+	return b.priceId
 }

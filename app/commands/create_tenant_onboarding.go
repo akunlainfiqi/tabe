@@ -109,10 +109,11 @@ func (c *CreateTenantOnboardingCommand) Execute(req *CreateTenantOnboardingReque
 		billId.String(),
 		organization.ID,
 		tenant.ID(),
+		price.ID(),
 		price.Price(),
 		0,
 		time.Now().Add(1*time.Hour).Unix(),
-		entities.BillTypeNewSubscription,
+		string(entities.BillTypeNewSubscription),
 	)
 	if err != nil {
 		return nil, err

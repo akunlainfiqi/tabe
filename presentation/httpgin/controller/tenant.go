@@ -9,8 +9,10 @@ import (
 )
 
 type TenantController struct {
-	CreateTenantCommand commands.CreateTenantOnboardingCommand
-	ExtendTenantCommand commands.ExtendTenantCommand
+	CreateTenantCommand    commands.CreateTenantOnboardingCommand
+	ExtendTenantCommand    commands.ExtendTenantCommand
+	UpgradeTenantCommand   commands.TenantUpgradeCommand
+	DowngradeTenantCommand commands.TenantDowngradeCommand
 
 	TenantQuery queries.TenantQuery
 }
@@ -18,11 +20,16 @@ type TenantController struct {
 func NewTenantController(
 	createTenantCommand commands.CreateTenantOnboardingCommand,
 	ExtendTenantCommand commands.ExtendTenantCommand,
+	UpgradeTenantCommand commands.TenantUpgradeCommand,
+	DowngradeTenantCommand commands.TenantDowngradeCommand,
 
 	tenantQuery queries.TenantQuery,
 ) *TenantController {
 	return &TenantController{
-		CreateTenantCommand: createTenantCommand,
+		CreateTenantCommand:    createTenantCommand,
+		ExtendTenantCommand:    ExtendTenantCommand,
+		UpgradeTenantCommand:   UpgradeTenantCommand,
+		DowngradeTenantCommand: DowngradeTenantCommand,
 
 		TenantQuery: tenantQuery,
 	}
@@ -212,4 +219,86 @@ func (c *TenantController) ExtendTenant(ctx *gin.Context) {
 			"message": "success",
 			"data":    res,
 		})
+}
+
+func (c *TenantController) ChangeTenantTier(ctx *gin.Context) {
+	userId := ctx.GetString("user_id")
+	if userId == "" {
+		ctx.JSON(401,
+			gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "Unauthorized",
+			})
+		return
+	}
+
+	var params struct {
+		ChangeType string `json:"change_type" binding:"required"`
+		TenantId   string `json:"tenant_id" binding:"required"`
+		PriceId    string `json:"price_id" binding:"required"`
+	}
+
+	if err := ctx.ShouldBind(&params); err != nil {
+		ctx.JSON(400,
+			gin.H{
+				"status":  http.StatusBadRequest,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	if params.ChangeType == "upgrade" {
+		req := &commands.TenantUpgradeRequest{
+			TenantID: params.TenantId,
+			PriceID:  params.PriceId,
+		}
+
+		res, err := c.UpgradeTenantCommand.Execute(req)
+		if err != nil {
+			ctx.JSON(500,
+				gin.H{
+					"status":  http.StatusInternalServerError,
+					"message": err.Error(),
+				})
+			return
+		}
+
+		ctx.JSON(201,
+			gin.H{
+				"status":  http.StatusCreated,
+				"message": "success",
+				"data":    res,
+			})
+	}
+
+	if params.ChangeType == "downgrade" {
+		req := &commands.TenantDowngradeRequest{
+			TenantID: params.TenantId,
+			PriceID:  params.PriceId,
+		}
+
+		res, err := c.DowngradeTenantCommand.Execute(req)
+		if err != nil {
+			ctx.JSON(500,
+				gin.H{
+					"status":  http.StatusInternalServerError,
+					"message": err.Error(),
+				})
+			return
+		}
+
+		ctx.JSON(201,
+			gin.H{
+				"status":  http.StatusCreated,
+				"message": "success",
+				"data":    res,
+			})
+	}
+
+	ctx.JSON(400,
+		gin.H{
+			"status":  http.StatusBadRequest,
+			"message": "invalid change type",
+		})
+
 }

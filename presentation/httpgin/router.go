@@ -54,6 +54,7 @@ func New() *gin.Engine {
 	billQueries := pgsql.NewBillQuery(pgclient)
 	productQueries := pgsql.NewProductQuery(pgclient)
 	tenantQueries := pgsql.NewTenantQuery(pgclient)
+	transactQueries := pgsql.NewTransactionQuery(pgclient)
 
 	appsRepository := pgsql.NewAppsRepository(pgclient)
 	billsRepository := pgsql.NewBillsRepository(pgclient)
@@ -70,7 +71,9 @@ func New() *gin.Engine {
 	createProductCommand := commands.NewCreateProductCommand(productRepository, appsRepository, priceRepository)
 	createTenantCommand := commands.NewCreateTenantOnboardingCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, iamOrganizationRepository, midtransService)
 	checkPaymentCommand := commands.NewCheckPayment(transactionRepository, billsRepository, organizationRepository, tenantRepository, priceRepository, midtransService, publisherService)
-	extendCTenantCommand := commands.NewExtendTenantCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, midtransService)
+	extendTenantCommand := commands.NewExtendTenantCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, midtransService)
+	upgradeTenantCommand := commands.NewTenantUpgradeCommand(tenantRepository, priceRepository, billsRepository, organizationRepository, midtransService)
+	downgrandeTenantCommand := commands.NewTenantDowngradeCommand(tenantRepository, priceRepository, organizationRepository, billsRepository, midtransService)
 
 	expireBillCommand := commands.NewExpireBillsCommand(billsRepository)
 	payBillCommand := commands.NewPayBillsCommand(billsRepository, tenantRepository, transactionRepository)
@@ -79,7 +82,8 @@ func New() *gin.Engine {
 	productController := controller.NewProductController(productQueries, *createProductCommand)
 	billsControlerr := controller.NewBillController(*expireBillCommand, *payBillCommand, *createBillCommand, *checkPaymentCommand, iamOrganizationQuery, billQueries)
 	organizationController := controller.NewOrganizationController(*createOrganizationCommand)
-	tenantController := controller.NewTenantController(*createTenantCommand, *extendCTenantCommand, tenantQueries)
+	tenantController := controller.NewTenantController(*createTenantCommand, *extendTenantCommand, *upgradeTenantCommand, *downgrandeTenantCommand, tenantQueries)
+	transactionController := controller.NewTransactionController(transactQueries)
 
 	v1.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -104,9 +108,13 @@ func New() *gin.Engine {
 	})
 
 	jwt.POST("/tenants", tenantController.CreateTenant)
-	jwt.GET("/bills", billsControlerr.GetBillDetail)
+	jwt.POST("/tenants/extend", tenantController.ExtendTenant)
 	jwt.GET("/organizations/:org_id/bills", billsControlerr.GetOrganizationBills)
+	jwt.GET("/organizations/:org_id/bills/:bill_id", billsControlerr.GetBillDetail)
+	jwt.GET("/organizations/:org_id/bills/:bill_id/transaction", transactionController.GetByBillsID)
 	jwt.GET("/organizations/:org_id/tenants", tenantController.GetByOrgID)
+	jwt.POST("/organizations/:org_id/tenants", tenantController.ChangeTenantTier)
+	jwt.GET("/organizations/:org_id/transactions", transactionController.GetByOrgID)
 
 	v1.GET("/apps", appControlerr.GetAll)
 	v1.GET("/products", productController.GetAll)

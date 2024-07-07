@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"net/http"
 	"saas-billing/app/commands"
 	"saas-billing/app/queries"
@@ -159,10 +160,11 @@ func (c *BillController) GetBillDetail(ctx *gin.Context) {
 	}
 
 	var params struct {
-		BillID string `form:"bill_id" binding:"required"`
+		BillID         string `uri:"bill_id"`
+		OrganizationID string `uri:"org_id"`
 	}
 
-	if err := ctx.ShouldBind(&params); err != nil {
+	if err := ctx.ShouldBindUri(&params); err != nil {
 		ctx.JSON(400,
 			gin.H{
 				"status":  http.StatusBadRequest,
@@ -171,6 +173,7 @@ func (c *BillController) GetBillDetail(ctx *gin.Context) {
 		return
 	}
 
+	log.Print(params.BillID)
 	bill, err := c.BillQuery.GetByID(params.BillID)
 	if err != nil {
 		if err == errors.ErrBillsNotFound {

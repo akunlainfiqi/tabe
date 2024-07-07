@@ -15,6 +15,26 @@ var (
 		Code:    1002,
 		Message: "invalid_bill_type",
 	})
+	ErrInvalidBillStatus = NewInvariant(InvariantParam{
+		Code:    1003,
+		Message: "invalid_bill_status",
+	})
+	ErrInvalidCurrentApp = NewInvariant(InvariantParam{
+		Code:    1004,
+		Message: "invalid_current_app",
+	})
+	ErrMismatchedApp = NewInvariant(InvariantParam{
+		Code:    1005,
+		Message: "mismatched_app",
+	})
+	ErrInvalidTierIndex = NewInvariant(InvariantParam{
+		Code:    1006,
+		Message: "invalid_tier_index",
+	})
+	ErrInvalidPrice = NewInvariant(InvariantParam{
+		Code:    1007,
+		Message: "invalid_price",
+	})
 )
 
 var (

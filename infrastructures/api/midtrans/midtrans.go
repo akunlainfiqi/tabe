@@ -1,7 +1,6 @@
 package midtransapi
 
 import (
-	"log"
 	"saas-billing/app/services"
 
 	"github.com/midtrans/midtrans-go"
@@ -34,7 +33,6 @@ func (m *midtransService) CreateTransaction(orderID string, grossAmount int64) (
 	})
 
 	if err != nil {
-		log.Print(err)
 		return nil, err
 	}
 
@@ -44,7 +42,6 @@ func (m *midtransService) CreateTransaction(orderID string, grossAmount int64) (
 func (m *midtransService) CheckTransactionStatus(orderID string) (*coreapi.TransactionStatusResponse, error) {
 	res, err := m.CoreClient.CheckTransaction(orderID)
 	if err != nil {
-		log.Print(err)
 		return nil, err
 	}
 	return res, nil

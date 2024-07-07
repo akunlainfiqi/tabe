@@ -19,8 +19,7 @@ type ExtendTenantCommand struct {
 	orgRepository    repositories.OrganizationRepository
 	priceRepository  repositories.PriceRepository
 	billsRepository  repositories.BillsRepository
-
-	midtransService services.Midtrans
+	midtransService  services.Midtrans
 }
 
 func NewExtendTenantCommand(
@@ -80,10 +79,11 @@ func (c *ExtendTenantCommand) Do(req *ExtendTenantCommandRequest) (interface{}, 
 		id.String(),
 		org.ID(),
 		tenant.ID(),
+		price.ID(),
 		price.Price(),
 		balanceUsed,
 		time.Now().AddDate(0, 0, 1).Unix(),
-		entities.BillTypeRenewal,
+		string(entities.BillTypeRenewal),
 	)
 	if err != nil {
 		return nil, err

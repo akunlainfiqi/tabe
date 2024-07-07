@@ -71,3 +71,7 @@ func (t *Tenant) SetActiveUntil(activeUntil int64) {
 func (t *Tenant) PriceID() string {
 	return t.priceId
 }
+
+func (t *Tenant) SetPriceID(priceId string) {
+	t.priceId = priceId
+}

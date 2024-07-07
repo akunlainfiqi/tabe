@@ -20,7 +20,7 @@ func NewProductRepository(db *gorm.DB) repositories.ProductRepository {
 }
 
 // FindByID finds a product by its ID
-func (pr *ProductRepository) FindByID(id string) (*entities.Product, error) {
+func (pr *ProductRepository) GetByID(id string) (*entities.Product, error) {
 	var dto struct {
 		ProductId string
 		AppID     string
@@ -46,8 +46,8 @@ func (pr *ProductRepository) FindByID(id string) (*entities.Product, error) {
 			p.id = @id
 	`, map[string]interface{}{
 		"id": id,
-	}).Scan(&dto); err != nil {
-		return nil, err.Error
+	}).Scan(&dto).Error; err != nil {
+		return nil, err
 	}
 
 	if dto.ProductId == "" {
@@ -55,7 +55,7 @@ func (pr *ProductRepository) FindByID(id string) (*entities.Product, error) {
 	}
 
 	app := entities.NewApps(dto.AppID, dto.Name)
-	product := entities.NewProduct(dto.ProductId, *app, dto.TierName, dto.TierIndex)
+	product := entities.NewProduct(dto.ProductId, app, dto.TierName, dto.TierIndex)
 
 	return product, nil
 }

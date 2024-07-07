@@ -18,6 +18,7 @@ type TenantDTO struct {
 	ID             string
 	Name           string
 	AppID          string
+	AppName        string
 	OrganizationId string
 	ActiveUntil    string
 	CreatedAt      string
@@ -65,11 +66,16 @@ func (tq *tenantQuery) FindByOrgID(orgID string) ([]queries.Tenant, error) {
 			t.id,
 			t.name,
 			t.app_id,
+			a.name as app_name,
 			t.organization_id,
 			t.active_until,
 			t.created_at
 		FROM
 			tenants t
+		JOIN
+			apps a
+		ON
+			t.app_id = a.id
 		WHERE
 			t.organization_id = ?
 	`, orgID).Scan(&temp).Error; err != nil {
@@ -82,6 +88,7 @@ func (tq *tenantQuery) FindByOrgID(orgID string) ([]queries.Tenant, error) {
 		tenant.ID = t.ID
 		tenant.Name = t.Name
 		tenant.AppID = t.AppID
+		tenant.AppName = t.AppName
 		tenant.OrgID = t.OrganizationId
 		tenant.ActiveUntil = t.ActiveUntil
 		tenant.CreatedAt = t.CreatedAt

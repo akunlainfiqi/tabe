@@ -2,14 +2,14 @@ package entities
 
 type Product struct {
 	id        string
-	app       Apps
+	app       *Apps
 	tierName  string
 	tierIndex int
 }
 
 func NewProduct(
 	id string,
-	app Apps,
+	app *Apps,
 	tierName string,
 	tierIndex int,
 ) *Product {
@@ -26,7 +26,7 @@ func (p *Product) ID() string {
 }
 
 func (p *Product) App() *Apps {
-	return &p.app
+	return p.app
 }
 
 func (p *Product) TierName() string {

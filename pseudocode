@@ -1,0 +1,202 @@
+// membuat tagihan
+BEGIN
+    INPUT id_tenant, tipe_tagihan
+    DECLARE balance_used
+
+    GET tenant WHERE id_tenant = id_tenant
+    GET organisasi WHERE id_organisasi = tenant.id_organisasi
+    GET harga WHERE id_harga = tenant.id_harga
+
+    IF organisasi.balance > 0 THEN
+        IF organisasi.balance < harga.price THEN
+            balance_used = organisasi.balance
+            organisasi.balance = 0
+        ELSE
+            balance_used = harga.price
+            organisasi.balance = organisasi.balance - harga.price
+    ELSE
+        balance_used = 0
+    END IF
+
+    CREATE tagihan
+
+    IF tagihan.balance_used == tagihan.total THEN
+        tagihan.status = 'PAID'
+
+        CREATE transaksi
+
+        proses_per_tipe_tagihan(tipe_tagihan)
+
+        SAVE transaksi
+        SAVE organisasi
+    ELSE
+        tagihan.status = 'UNPAID'
+
+        CREATE url_pembayaran
+
+        RETURN url_pembayaran
+    END IF
+END
+
+//mendaftarkan tenant baru
+BEGIN
+    INPUT id_harga, id_organisasi, id_tenant
+
+    GET harga WHERE id_harga = id_harga
+    GET organisasi WHERE id_organisasi = id_organisasi
+
+    CREATE tenant
+    CREATE tagihan
+
+    SAVE tenant
+    SAVE tagihan
+
+    CREATE url_pembayaran
+
+    RETURN url_pembayaran
+END
+
+//mendapatkan daftar tagihan
+BEGIN
+    INPUT id_organisasi
+
+    GET organisasi WHERE id_organisasi = id_organisasi
+
+    GET tagihan WHERE id_organisasi = id_organisasi
+
+    RETURN tagihan
+END
+
+//mendapatkan detail tagihan
+BEGIN
+    INPUT id_tagihan
+
+    GET tagihan WHERE id_tagihan = id_tagihan
+
+    RETURN tagihan
+END
+
+//mendapatkan daftar transaksi
+BEGIN
+    INPUT id_organisasi
+
+    GET transaksi WHERE id_organisasi = id_organisasi
+
+    RETURN transaksi
+END
+
+//mendapatkan daftar langganan
+BEGIN
+    INPUT id_organisasi
+
+    GET tenant WHERE id_organisasi = id_organisasi
+
+    RETURN tenant
+END
+
+//memberhentikan langganan
+BEGIN
+    INPUT id_tenant
+    GET config WHERE key is enable_refund
+
+    IF config.value == 1 THEN
+        GET tenant WHERE id_tenant = id_tenant
+        GET organisasi WHERE id_organisasi = tenant.id_organisasi
+        GET harga WHERE id_harga = tenant.id_harga
+
+        refund = harga.price - harga.price * (tenant.active_until - NOW() / 30)
+        organisasi.balance = organisasi.balance + refund
+
+        SAVE organisasi
+
+        UPDATE tenant.active_until = NOW()
+    END IF
+END
+
+//mengubah langganan
+BEGIN
+    INPUT id_tenant, id_harga_tujuan
+
+    GET tenant WHERE id_tenant = id_tenant
+    GET harga WHERE id_harga = id_harga_tujuan
+    GET config WHERE key is enable_refund
+
+    IF harga_tier_baru < harga_tier_lama THEN
+        IF config.value == 1 THEN
+            GET organisasi WHERE id_organisasi = tenant.id_organisasi
+
+            refund = tenant.id_harga.price - tenant.id_harga.price * (tenant.active_until - NOW() / 30)
+            organisasi.balance = organisasi.balance + refund
+
+            SAVE organisasi
+        END IF
+    END IF
+
+    IF harga_tier_baru > harga_tier_lama THEN
+        GET organisasi WHERE id_organisasi = tenant.id_organisasi
+
+        IF config.value == 1 THEN
+            GET organisasi WHERE id_organisasi = tenant.id_organisasi
+
+            refund = harga_tier_lama - harga_tier_lama * (tenant.active_until - NOW() / 30)
+            organisasi.balance = organisasi.balance + refund
+            CREATE transaksi
+
+            SAVE organisasi
+            SAVE transaksi
+        END IF
+
+        IF organisasi.balance < harga.price THEN
+            CREATE tagihan
+            CREATE url_pembayaran
+
+            UPDATE tenant.id_harga = id_harga_tujuan
+            SAVE tenant
+
+            RETURN url_pembayaran
+        ELSE
+            organisasi.balance = organisasi.balance - harga.price
+            UPDATE tenant.active_until = NOW() + harga.duration
+
+            CREATE transaksi
+
+            SAVE organisasi
+            SAVE transaksi
+        END IF
+    END IF
+
+    UPDATE tenant.id_harga = id_harga_tujuan
+    SAVE tenant
+END
+
+//memperpanjang langganan
+BEGIN
+    INPUT id_tenant
+
+    GET tenant WHERE id_tenant = id_tenant
+    GET harga WHERE id_harga = tenant.id_harga
+
+    GET organisasi WHERE id_organisasi = tenant.id_organisasi
+
+    IF organisasi.balance < harga.price THEN
+        CREATE tagihan
+        CREATE url_pembayaran
+
+        RETURN url_pembayaran
+    ELSE
+        organisasi.balance = organisasi.balance - harga.price
+        CREATE transaksi
+
+        UPDATE tenant.active_until = tenant.active_until + harga.duration
+        SAVE tenant
+        SAVE organisasi
+        SAVE transaksi
+    END IF
+END
+
+//menghentikan langganan kadaluarsa
+BEGIN
+    GET tenant WHERE active_until < NOW()
+
+    broadcast_event('tenant_expired', tenant.id_tenant)
+END

@@ -23,6 +23,7 @@ func (ar *AppsRepository) FindByID(id string) (*entities.Apps, error) {
 		ID   string
 		Name string
 	}
+
 	if err := ar.db.Raw(`
 		SELECT
 			id,
@@ -33,8 +34,8 @@ func (ar *AppsRepository) FindByID(id string) (*entities.Apps, error) {
 			id = @id
 	`, map[string]interface{}{
 		"id": id,
-	}).Scan(&dto); err != nil {
-		return nil, err.Error
+	}).Scan(&dto).Error; err != nil {
+		return nil, err
 	}
 
 	if dto.ID == "" {
