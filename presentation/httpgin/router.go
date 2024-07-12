@@ -55,6 +55,7 @@ func New() *gin.Engine {
 	productQueries := pgsql.NewProductQuery(pgclient)
 	tenantQueries := pgsql.NewTenantQuery(pgclient)
 	transactQueries := pgsql.NewTransactionQuery(pgclient)
+	orgQueries := pgsql.NewOrganizationQuery(pgclient)
 
 	appsRepository := pgsql.NewAppsRepository(pgclient)
 	billsRepository := pgsql.NewBillsRepository(pgclient)
@@ -82,7 +83,7 @@ func New() *gin.Engine {
 	appControlerr := controller.NewAppController(appQuery)
 	productController := controller.NewProductController(productQueries, *createProductCommand)
 	billsControlerr := controller.NewBillController(*expireBillCommand, *payBillCommand, *createBillCommand, *checkPaymentCommand, iamOrganizationQuery, billQueries)
-	organizationController := controller.NewOrganizationController(*createOrganizationCommand)
+	organizationController := controller.NewOrganizationController(*createOrganizationCommand, orgQueries)
 	tenantController := controller.NewTenantController(*createTenantCommand, *extendTenantCommand, *upgradeTenantCommand, *downgrandeTenantCommand, *stopTenantCommand, tenantQueries)
 	transactionController := controller.NewTransactionController(transactQueries)
 
@@ -110,6 +111,7 @@ func New() *gin.Engine {
 
 	jwt.POST("/tenants", tenantController.CreateTenant)
 	jwt.POST("/tenants/extend", tenantController.ExtendTenant)
+	jwt.GET("/organizations/:org_id", organizationController.GetByID)
 	jwt.GET("/organizations/:org_id/bills", billsControlerr.GetOrganizationBills)
 	jwt.GET("/organizations/:org_id/bills/:bill_id", billsControlerr.GetBillDetail)
 	jwt.GET("/organizations/:org_id/bills/:bill_id/transaction", transactionController.GetByBillsID)

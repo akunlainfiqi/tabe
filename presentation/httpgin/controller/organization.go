@@ -3,19 +3,23 @@ package controller
 import (
 	"net/http"
 	"saas-billing/app/commands"
+	"saas-billing/app/queries"
 
 	"github.com/gin-gonic/gin"
 )
 
 type OrganizationController struct {
 	createOrganizationCommand commands.CreateOrganizationCommand
+	orgQuery                  queries.OrganizationQuery
 }
 
 func NewOrganizationController(
 	createOrganizationCommand commands.CreateOrganizationCommand,
+	orgQuery queries.OrganizationQuery,
 ) *OrganizationController {
 	return &OrganizationController{
 		createOrganizationCommand: createOrganizationCommand,
+		orgQuery:                  orgQuery,
 	}
 }
 
@@ -58,5 +62,26 @@ func (c *OrganizationController) Create(ctx *gin.Context) {
 		gin.H{
 			"status":  http.StatusCreated,
 			"message": "success",
+		})
+}
+
+func (c *OrganizationController) GetByID(ctx *gin.Context) {
+	orgID := ctx.Param("org_id")
+
+	organization, err := c.orgQuery.GetByID(orgID)
+	if err != nil {
+		ctx.JSON(500,
+			gin.H{
+				"status":  http.StatusInternalServerError,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	ctx.JSON(200,
+		gin.H{
+			"status":  http.StatusOK,
+			"message": "success",
+			"data":    organization,
 		})
 }
