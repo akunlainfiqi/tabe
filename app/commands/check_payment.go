@@ -102,7 +102,7 @@ func (c *CheckPaymentCommand) checkBillById(bill *entities.Bills) error {
 			return err
 		}
 
-		price, err := c.priceRepository.GetByID(tenant.PriceID())
+		price, err := c.priceRepository.GetByID(bill.PriceID())
 		if err != nil {
 			return err
 		}
@@ -120,6 +120,16 @@ func (c *CheckPaymentCommand) checkBillById(bill *entities.Bills) error {
 				tenant.SetActiveUntil(time.Unix(tenant.ActiveUntil(), 0).AddDate(1, 0, 0).Unix())
 			}
 		} else if bill.BillType() == entities.BillTypeUpgrade {
+			tenant.SetPriceID(bill.PriceID())
+
+			if price.Recurrence() == entities.ProductRecurrenceMonthly {
+				tenant.SetActiveUntil(time.Now().AddDate(0, 1, 0).Unix())
+			} else if price.Recurrence() == entities.ProductRecurrenceYearly {
+				tenant.SetActiveUntil(time.Now().AddDate(1, 0, 0).Unix())
+			}
+		} else if bill.BillType() == entities.BillTypeDowngrade {
+			tenant.SetPriceID(bill.PriceID())
+
 			if price.Recurrence() == entities.ProductRecurrenceMonthly {
 				tenant.SetActiveUntil(time.Now().AddDate(0, 1, 0).Unix())
 			} else if price.Recurrence() == entities.ProductRecurrenceYearly {
@@ -143,6 +153,7 @@ func (c *CheckPaymentCommand) checkBillById(bill *entities.Bills) error {
 
 		pl := services.TenantPaidPayload{
 			TenantID:  bill.TenantID(),
+			ProductID: price.Product().ID(),
 			Timestamp: time.Now(),
 		}
 

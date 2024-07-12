@@ -4,6 +4,7 @@ import "time"
 
 type TenantPaidPayload struct {
 	TenantID  string    `json:"tenant_id"`
+	ProductID string    `json:"product_id"`
 	Timestamp time.Time `json:"timestamp"`
 }
 

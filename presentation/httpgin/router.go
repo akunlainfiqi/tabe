@@ -74,6 +74,7 @@ func New() *gin.Engine {
 	extendTenantCommand := commands.NewExtendTenantCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, midtransService)
 	upgradeTenantCommand := commands.NewTenantUpgradeCommand(tenantRepository, priceRepository, billsRepository, organizationRepository, midtransService)
 	downgrandeTenantCommand := commands.NewTenantDowngradeCommand(tenantRepository, priceRepository, organizationRepository, billsRepository, midtransService)
+	stopTenantCommand := commands.NewTenantStopCommand(tenantRepository, organizationRepository, billsRepository, priceRepository)
 
 	expireBillCommand := commands.NewExpireBillsCommand(billsRepository)
 	payBillCommand := commands.NewPayBillsCommand(billsRepository, tenantRepository, transactionRepository)
@@ -82,7 +83,7 @@ func New() *gin.Engine {
 	productController := controller.NewProductController(productQueries, *createProductCommand)
 	billsControlerr := controller.NewBillController(*expireBillCommand, *payBillCommand, *createBillCommand, *checkPaymentCommand, iamOrganizationQuery, billQueries)
 	organizationController := controller.NewOrganizationController(*createOrganizationCommand)
-	tenantController := controller.NewTenantController(*createTenantCommand, *extendTenantCommand, *upgradeTenantCommand, *downgrandeTenantCommand, tenantQueries)
+	tenantController := controller.NewTenantController(*createTenantCommand, *extendTenantCommand, *upgradeTenantCommand, *downgrandeTenantCommand, *stopTenantCommand, tenantQueries)
 	transactionController := controller.NewTransactionController(transactQueries)
 
 	v1.GET("/ping", func(c *gin.Context) {
@@ -114,6 +115,7 @@ func New() *gin.Engine {
 	jwt.GET("/organizations/:org_id/bills/:bill_id/transaction", transactionController.GetByBillsID)
 	jwt.GET("/organizations/:org_id/tenants", tenantController.GetByOrgID)
 	jwt.POST("/organizations/:org_id/tenants", tenantController.ChangeTenantTier)
+	jwt.POST("/organizations/:org_id/tenants/stop", tenantController.StopTenant)
 	jwt.GET("/organizations/:org_id/transactions", transactionController.GetByOrgID)
 
 	v1.GET("/apps", appControlerr.GetAll)

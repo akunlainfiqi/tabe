@@ -13,6 +13,7 @@ type TenantController struct {
 	ExtendTenantCommand    commands.ExtendTenantCommand
 	UpgradeTenantCommand   commands.TenantUpgradeCommand
 	DowngradeTenantCommand commands.TenantDowngradeCommand
+	StopTenantCommand      commands.TenantStopCommand
 
 	TenantQuery queries.TenantQuery
 }
@@ -22,6 +23,7 @@ func NewTenantController(
 	ExtendTenantCommand commands.ExtendTenantCommand,
 	UpgradeTenantCommand commands.TenantUpgradeCommand,
 	DowngradeTenantCommand commands.TenantDowngradeCommand,
+	StopTenantCommand commands.TenantStopCommand,
 
 	tenantQuery queries.TenantQuery,
 ) *TenantController {
@@ -30,6 +32,7 @@ func NewTenantController(
 		ExtendTenantCommand:    ExtendTenantCommand,
 		UpgradeTenantCommand:   UpgradeTenantCommand,
 		DowngradeTenantCommand: DowngradeTenantCommand,
+		StopTenantCommand:      StopTenantCommand,
 
 		TenantQuery: tenantQuery,
 	}
@@ -301,4 +304,49 @@ func (c *TenantController) ChangeTenantTier(ctx *gin.Context) {
 			"message": "invalid change type",
 		})
 
+}
+
+func (c *TenantController) StopTenant(ctx *gin.Context) {
+	userId := ctx.GetString("user_id")
+	if userId == "" {
+		ctx.JSON(401,
+			gin.H{
+				"status":  http.StatusUnauthorized,
+				"message": "Unauthorized",
+			})
+		return
+	}
+
+	var params struct {
+		TenantId string `json:"tenant_id" binding:"required"`
+	}
+
+	if err := ctx.ShouldBind(&params); err != nil {
+		ctx.JSON(400,
+			gin.H{
+				"status":  http.StatusBadRequest,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	req := &commands.TenantStopRequest{
+		TenantID: params.TenantId,
+	}
+
+	err := c.StopTenantCommand.Execute(req)
+	if err != nil {
+		ctx.JSON(500,
+			gin.H{
+				"status":  http.StatusInternalServerError,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	ctx.JSON(201,
+		gin.H{
+			"status":  http.StatusCreated,
+			"message": "success",
+		})
 }

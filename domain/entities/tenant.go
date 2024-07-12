@@ -1,5 +1,7 @@
 package entities
 
+import "time"
+
 type Tenant struct {
 	id             string
 	name           string
@@ -66,6 +68,10 @@ func (t *Tenant) ActiveUntil() int64 {
 
 func (t *Tenant) SetActiveUntil(activeUntil int64) {
 	t.activeUntil = activeUntil
+}
+
+func (t *Tenant) Stop() {
+	t.activeUntil = time.Now().Unix()
 }
 
 func (t *Tenant) PriceID() string {
