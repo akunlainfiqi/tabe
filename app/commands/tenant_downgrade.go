@@ -45,6 +45,10 @@ func (c *TenantDowngradeCommand) Execute(req *TenantDowngradeRequest) (interface
 		return nil, err
 	}
 
+	if tenant.PriceID() == req.PriceID {
+		return nil, errors.ErrInvalidSameProductPrice
+	}
+
 	org, err := c.orgRepository.GetByID(tenant.OrganizationID())
 	if err != nil {
 		return nil, err
