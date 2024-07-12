@@ -60,7 +60,7 @@ func (c *TenantUpgradeCommand) Execute(req *TenantUpgradeRequest) (interface{}, 
 	}
 
 	if tenant.PriceID() == req.PriceID {
-		return nil, errors.ErrInvalidCurrentApp
+		return nil, errors.ErrInvalidSameProductPrice
 	}
 
 	if newPrice.Product().TierIndex() < oldPrice.Product().TierIndex() {

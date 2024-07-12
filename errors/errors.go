@@ -19,9 +19,9 @@ var (
 		Code:    1003,
 		Message: "invalid_bill_status",
 	})
-	ErrInvalidCurrentApp = NewInvariant(InvariantParam{
+	ErrInvalidSameProductPrice = NewInvariant(InvariantParam{
 		Code:    1004,
-		Message: "invalid_current_app",
+		Message: "invalid_same_product_price",
 	})
 	ErrMismatchedApp = NewInvariant(InvariantParam{
 		Code:    1005,
