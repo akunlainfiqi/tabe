@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"saas-billing/app/services"
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
@@ -21,6 +22,7 @@ type TenantDowngradeCommand struct {
 	orgRepository    repositories.OrganizationRepository
 	billsRepository  repositories.BillsRepository
 	midtransService  services.Midtrans
+	publisherService services.Publisher
 }
 
 func NewTenantDowngradeCommand(
@@ -29,6 +31,7 @@ func NewTenantDowngradeCommand(
 	orgRepository repositories.OrganizationRepository,
 	billsRepository repositories.BillsRepository,
 	midtransService services.Midtrans,
+	publisherService services.Publisher,
 ) *TenantDowngradeCommand {
 	return &TenantDowngradeCommand{
 		tenantRepository: tenantRepository,
@@ -36,6 +39,7 @@ func NewTenantDowngradeCommand(
 		orgRepository:    orgRepository,
 		billsRepository:  billsRepository,
 		midtransService:  midtransService,
+		publisherService: publisherService,
 	}
 }
 
@@ -133,6 +137,21 @@ func (c *TenantDowngradeCommand) Execute(req *TenantDowngradeRequest) (interface
 		}
 
 		if err := c.tenantRepository.Update(tenant); err != nil {
+			return nil, err
+		}
+
+		pl := services.TenantPaidPayload{
+			TenantID:  bill.TenantID(),
+			ProductID: newPrice.Product().ID(),
+			Timestamp: time.Now(),
+		}
+
+		payload, err := json.Marshal(pl)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := c.publisherService.Publish("billing_paid", payload); err != nil {
 			return nil, err
 		}
 

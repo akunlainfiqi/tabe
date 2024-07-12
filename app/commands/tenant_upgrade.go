@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"saas-billing/app/services"
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
@@ -21,6 +22,7 @@ type TenantUpgradeCommand struct {
 	billRepository         repositories.BillsRepository
 	organizationRepository repositories.OrganizationRepository
 	midtransService        services.Midtrans
+	publisherService       services.Publisher
 }
 
 func NewTenantUpgradeCommand(
@@ -29,6 +31,7 @@ func NewTenantUpgradeCommand(
 	billRepository repositories.BillsRepository,
 	organizationRepository repositories.OrganizationRepository,
 	midtransService services.Midtrans,
+	publisherService services.Publisher,
 ) *TenantUpgradeCommand {
 	return &TenantUpgradeCommand{
 		tenantRepository:       tenantRepository,
@@ -36,6 +39,7 @@ func NewTenantUpgradeCommand(
 		billRepository:         billRepository,
 		organizationRepository: organizationRepository,
 		midtransService:        midtransService,
+		publisherService:       publisherService,
 	}
 }
 
@@ -122,6 +126,20 @@ func (c *TenantUpgradeCommand) Execute(req *TenantUpgradeRequest) (interface{}, 
 			return nil, err
 		}
 
+		pl := services.TenantPaidPayload{
+			TenantID:  bill.TenantID(),
+			ProductID: newPrice.Product().ID(),
+			Timestamp: time.Now(),
+		}
+
+		payload, err := json.Marshal(pl)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := c.publisherService.Publish("billing_paid", payload); err != nil {
+			return nil, err
+		}
 		return nil, nil
 	}
 

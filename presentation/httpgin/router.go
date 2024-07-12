@@ -72,8 +72,8 @@ func New() *gin.Engine {
 	createTenantCommand := commands.NewCreateTenantOnboardingCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, iamOrganizationRepository, midtransService)
 	checkPaymentCommand := commands.NewCheckPayment(transactionRepository, billsRepository, organizationRepository, tenantRepository, priceRepository, midtransService, publisherService)
 	extendTenantCommand := commands.NewExtendTenantCommand(tenantRepository, organizationRepository, priceRepository, billsRepository, midtransService)
-	upgradeTenantCommand := commands.NewTenantUpgradeCommand(tenantRepository, priceRepository, billsRepository, organizationRepository, midtransService)
-	downgrandeTenantCommand := commands.NewTenantDowngradeCommand(tenantRepository, priceRepository, organizationRepository, billsRepository, midtransService)
+	upgradeTenantCommand := commands.NewTenantUpgradeCommand(tenantRepository, priceRepository, billsRepository, organizationRepository, midtransService, publisherService)
+	downgrandeTenantCommand := commands.NewTenantDowngradeCommand(tenantRepository, priceRepository, organizationRepository, billsRepository, midtransService, publisherService)
 	stopTenantCommand := commands.NewTenantStopCommand(tenantRepository, organizationRepository, billsRepository, priceRepository)
 
 	expireBillCommand := commands.NewExpireBillsCommand(billsRepository)
