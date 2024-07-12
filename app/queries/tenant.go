@@ -5,6 +5,8 @@ type Tenant struct {
 	Name        string `json:"name"`
 	AppID       string `json:"app_id"`
 	AppName     string `json:"app_name"`
+	ProductID   string `json:"product_id"`
+	PriceID     string `json:"price_id"`
 	OrgID       string `json:"org_id"`
 	ActiveUntil string `json:"active_until"`
 	CreatedAt   string `json:"created_at"`

@@ -20,6 +20,8 @@ type TenantDTO struct {
 	AppID          string
 	AppName        string
 	OrganizationId string
+	ProductId      string
+	PriceId        string
 	ActiveUntil    string
 	CreatedAt      string
 }
@@ -34,6 +36,8 @@ func (tq *tenantQuery) FindByID(id string) (queries.Tenant, error) {
 			t.name,
 			t.app_id,
 			t.organization_id,
+			t.price_id,
+			t.product_id,
 			t.active_until,
 			t.created_at
 		FROM
@@ -50,6 +54,8 @@ func (tq *tenantQuery) FindByID(id string) (queries.Tenant, error) {
 		tenant.Name = t.Name
 		tenant.AppID = t.AppID
 		tenant.OrgID = t.OrganizationId
+		tenant.ProductID = t.ProductId
+		tenant.PriceID = t.PriceId
 		tenant.ActiveUntil = t.ActiveUntil
 		tenant.CreatedAt = t.CreatedAt
 	}
@@ -67,6 +73,8 @@ func (tq *tenantQuery) FindByOrgID(orgID string) ([]queries.Tenant, error) {
 			t.name,
 			t.app_id,
 			a.name as app_name,
+			t.price_id,
+			t.product_id,
 			t.organization_id,
 			t.active_until,
 			t.created_at
@@ -89,6 +97,8 @@ func (tq *tenantQuery) FindByOrgID(orgID string) ([]queries.Tenant, error) {
 		tenant.Name = t.Name
 		tenant.AppID = t.AppID
 		tenant.AppName = t.AppName
+		tenant.ProductID = t.ProductId
+		tenant.PriceID = t.PriceId
 		tenant.OrgID = t.OrganizationId
 		tenant.ActiveUntil = t.ActiveUntil
 		tenant.CreatedAt = t.CreatedAt
