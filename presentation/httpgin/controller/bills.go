@@ -11,10 +11,11 @@ import (
 )
 
 type BillController struct {
-	ExpireBillsCommand  commands.ExpireBillsCommand
-	PayBillsCommand     commands.PayBillsCommand
-	CreateBillCommand   commands.CreateBillsCommand
-	CheckPaymentCommand commands.CheckPaymentCommand
+	ExpireBillsCommand      commands.ExpireBillsCommand
+	PayBillsCommand         commands.PayBillsCommand
+	CreateBillCommand       commands.CreateBillsCommand
+	CheckPaymentCommand     commands.CheckPaymentCommand
+	CreatePaymentURLCommand commands.CreatePaymentURLCommand
 
 	IamUserOrganizationQuery queries.IamUserOrganizationQuery
 	BillQuery                queries.BillQuery
@@ -25,15 +26,17 @@ func NewBillController(
 	payBillsCommand commands.PayBillsCommand,
 	createBillCommand commands.CreateBillsCommand,
 	checkPaymentCommand commands.CheckPaymentCommand,
+	createPaymentURLCommand commands.CreatePaymentURLCommand,
 
 	iamUserOrganizationQuery queries.IamUserOrganizationQuery,
 	billQuery queries.BillQuery,
 ) *BillController {
 	return &BillController{
-		ExpireBillsCommand:  expireBillsCommand,
-		PayBillsCommand:     payBillsCommand,
-		CreateBillCommand:   createBillCommand,
-		CheckPaymentCommand: checkPaymentCommand,
+		ExpireBillsCommand:      expireBillsCommand,
+		PayBillsCommand:         payBillsCommand,
+		CreateBillCommand:       createBillCommand,
+		CheckPaymentCommand:     checkPaymentCommand,
+		CreatePaymentURLCommand: createPaymentURLCommand,
 
 		IamUserOrganizationQuery: iamUserOrganizationQuery,
 		BillQuery:                billQuery,
@@ -309,5 +312,40 @@ func (c *BillController) PaymentCallback(ctx *gin.Context) {
 		gin.H{
 			"status":  http.StatusOK,
 			"message": "success",
+		})
+}
+
+func (c *BillController) CreatePaymentURL(ctx *gin.Context) {
+	var params struct {
+		BillID string `json:"bill_id" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindJSON(&params); err != nil {
+		ctx.JSON(400,
+			gin.H{
+				"status":  http.StatusBadRequest,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	req := &commands.CreatePaymentURLRequest{
+		BillID: params.BillID,
+	}
+
+	url, err := c.CreatePaymentURLCommand.Execute(req)
+	if err != nil {
+		ctx.JSON(500,
+			gin.H{
+				"status":  http.StatusInternalServerError,
+				"message": err.Error(),
+			})
+		return
+	}
+
+	ctx.JSON(200,
+		gin.H{
+			"status": http.StatusOK,
+			"data":   url,
 		})
 }

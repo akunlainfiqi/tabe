@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/json"
 	"saas-billing/app/services"
+	"saas-billing/config"
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
 	"saas-billing/errors"
@@ -76,25 +77,27 @@ func (c *TenantDowngradeCommand) Execute(req *TenantDowngradeRequest) (interface
 		return nil, errors.ErrInvalidTierIndex
 	}
 
-	var balanceFairUsageRefund int64
-	if oldPrice.Recurrence() == entities.ProductRecurrenceMonthly {
-		//parse activeuntil from unix to time.Time
-		activeUntil := time.Unix(tenant.ActiveUntil(), 0)
-		//calculate the balance fair usage refund
-		// activeuntil - now = remaining days * old price / 30
-		activeUntilHours := time.Until(activeUntil).Hours()
-		balanceFairUsageRefund = int64(int64(activeUntilHours) * oldPrice.Price() / 30)
-	} else {
-		//parse activeuntil from unix to time.Time
-		activeUntil := time.Unix(tenant.ActiveUntil(), 0)
-		//calculate the balance fair usage refund
-		// activeuntil - now = remaining days * old price / 365
-		activeUntilHours := time.Until(activeUntil).Hours()
-		balanceFairUsageRefund = int64(int64(activeUntilHours) * oldPrice.Price() / 365)
-	}
+	if !config.DISABLE_REFUND {
+		var balanceFairUsageRefund int64
+		if oldPrice.Recurrence() == entities.ProductRecurrenceMonthly {
+			//parse activeuntil from unix to time.Time
+			activeUntil := time.Unix(tenant.ActiveUntil(), 0)
+			//calculate the balance fair usage refund
+			// activeuntil - now = remaining days * old price / 30
+			activeUntilHours := time.Until(activeUntil).Hours()
+			balanceFairUsageRefund = int64(int64(activeUntilHours) * oldPrice.Price() / 30)
+		} else {
+			//parse activeuntil from unix to time.Time
+			activeUntil := time.Unix(tenant.ActiveUntil(), 0)
+			//calculate the balance fair usage refund
+			// activeuntil - now = remaining days * old price / 365
+			activeUntilHours := time.Until(activeUntil).Hours()
+			balanceFairUsageRefund = int64(int64(activeUntilHours) * oldPrice.Price() / 365)
+		}
 
-	// Update the organization balance
-	org.SetBalance(org.Balance() + balanceFairUsageRefund)
+		// Update the organization balance
+		org.SetBalance(org.Balance() + balanceFairUsageRefund)
+	}
 
 	// Create a new bill for the balance fair usage refund
 	billId, err := uuid.NewRandom()

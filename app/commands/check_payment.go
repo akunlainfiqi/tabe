@@ -88,7 +88,7 @@ func (c *CheckPaymentCommand) checkBillById(bill *entities.Bills) error {
 			id.String(),
 			bill.ID(),
 			bill.OrganizationID(),
-			bill.Amount(),
+			bill.Total(),
 			entities.TransactionTypePayment,
 			trtime,
 		)

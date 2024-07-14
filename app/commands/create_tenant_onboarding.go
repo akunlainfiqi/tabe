@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"saas-billing/app/services"
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
@@ -42,7 +43,8 @@ type CreateTenantOnboardingCommand struct {
 
 	iamOrganizationRepository repositories.IamOrganizationRepository
 
-	midtransService services.Midtrans
+	midtransService  services.Midtrans
+	publisherService services.Publisher
 }
 
 func NewCreateTenantOnboardingCommand(
@@ -52,6 +54,7 @@ func NewCreateTenantOnboardingCommand(
 	billsRepository repositories.BillsRepository,
 	iamOrganizationRepository repositories.IamOrganizationRepository,
 	midtransService services.Midtrans,
+	publisherService services.Publisher,
 ) *CreateTenantOnboardingCommand {
 	return &CreateTenantOnboardingCommand{
 		tenantRepository:          tenantRepository,
@@ -60,6 +63,7 @@ func NewCreateTenantOnboardingCommand(
 		billsRepository:           billsRepository,
 		iamOrganizationRepository: iamOrganizationRepository,
 		midtransService:           midtransService,
+		publisherService:          publisherService,
 	}
 }
 
@@ -94,15 +98,71 @@ func (c *CreateTenantOnboardingCommand) Execute(req *CreateTenantOnboardingReque
 
 	product := price.Product()
 
+	billId, err := uuid.NewV7()
+	if err != nil {
+		return nil, err
+	}
+
 	tenant := entities.NewTenant(req.tenantId, req.tenantName, product.App().ID(), organization.ID, price.ID())
 
 	if err := c.tenantRepository.Create(tenant); err != nil {
 		return nil, err
 	}
 
-	billId, err := uuid.NewRandom()
-	if err != nil {
-		return nil, err
+	if org.Balance() > price.Price() {
+		balanceUsed := price.Price()
+
+		org.SetBalance(org.Balance() - balanceUsed)
+
+		bill, err := entities.NewBills(
+			billId.String(),
+			organization.ID,
+			tenant.ID(),
+			price.ID(),
+			price.Price(),
+			balanceUsed,
+			time.Now().Add(1*time.Hour).Unix(),
+			string(entities.BillTypeNewSubscription),
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if err := c.billsRepository.Create(bill); err != nil {
+			return nil, err
+		}
+
+		if err := c.organizationRepository.Update(org); err != nil {
+			return nil, err
+		}
+
+		if price.Recurrence() == entities.ProductRecurrenceMonthly {
+			tenant.SetActiveUntil(time.Now().AddDate(0, 1, 0).Unix())
+		} else if price.Recurrence() == entities.ProductRecurrenceYearly {
+			tenant.SetActiveUntil(time.Now().AddDate(1, 0, 0).Unix())
+		}
+
+		if err := c.tenantRepository.Create(tenant); err != nil {
+			return nil, err
+		}
+
+		pl := services.TenantPaidPayload{
+			TenantID:  tenant.ID(),
+			ProductID: product.ID(),
+			Timestamp: time.Now(),
+		}
+
+		payload, err := json.Marshal(pl)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := c.publisherService.Publish("billing_paid", payload); err != nil {
+			return nil, err
+		}
+
+		return nil, nil
 	}
 
 	bill, err := entities.NewBills(

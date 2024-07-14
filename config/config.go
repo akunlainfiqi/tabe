@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -20,6 +21,7 @@ var (
 	IAM_BEARER          = "secret"
 	MIDTRANS_SERVER_KEY = "SB-Mid-server-4Q9Q6Q1Q9Q1Q"
 	PROJECT_ID          = "saas-billing"
+	DISABLE_REFUND      = false
 )
 
 func init() {
@@ -73,5 +75,13 @@ func init() {
 
 	if os.Getenv("PROJECT_ID") != "" {
 		PROJECT_ID = os.Getenv("PROJECT_ID")
+	}
+
+	if os.Getenv("DISABLE_REFUND") != "" {
+		b, err := strconv.ParseBool(os.Getenv("DISABLE_REFUND"))
+		if err != nil {
+			DISABLE_REFUND = false
+		}
+		DISABLE_REFUND = b
 	}
 }

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"saas-billing/config"
 	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
 	"time"
@@ -48,21 +49,23 @@ func (c *TenantStopCommand) Execute(req *TenantStopRequest) error {
 		return err
 	}
 
-	var balanceFairUsageRefund int64
-	if pr.Recurrence() == entities.ProductRecurrenceMonthly {
-		activeUntil := time.Unix(tenant.ActiveUntil(), 0)
-		activeUntilHours := time.Until(activeUntil).Hours()
-		balanceFairUsageRefund = int64(int64(activeUntilHours) / 24 * pr.Price())
-	} else {
-		activeUntil := time.Unix(tenant.ActiveUntil(), 0)
-		activeUntilHours := time.Until(activeUntil).Hours()
-		balanceFairUsageRefund = int64(int64(activeUntilHours) / 24 / 365 * pr.Price())
-	}
+	if !config.DISABLE_REFUND {
+		var balanceFairUsageRefund int64
+		if pr.Recurrence() == entities.ProductRecurrenceMonthly {
+			activeUntil := time.Unix(tenant.ActiveUntil(), 0)
+			activeUntilHours := time.Until(activeUntil).Hours()
+			balanceFairUsageRefund = int64(int64(activeUntilHours) / 24 * pr.Price())
+		} else {
+			activeUntil := time.Unix(tenant.ActiveUntil(), 0)
+			activeUntilHours := time.Until(activeUntil).Hours()
+			balanceFairUsageRefund = int64(int64(activeUntilHours) / 24 / 365 * pr.Price())
+		}
 
-	org.SetBalance(org.Balance() + balanceFairUsageRefund)
+		org.SetBalance(org.Balance() + balanceFairUsageRefund)
 
-	if err := c.orgRepository.Update(org); err != nil {
-		return err
+		if err := c.orgRepository.Update(org); err != nil {
+			return err
+		}
 	}
 
 	if err := c.tenantRepository.Update(tenant); err != nil {

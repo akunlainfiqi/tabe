@@ -86,6 +86,7 @@ func (c *TenantUpgradeCommand) Execute(req *TenantUpgradeRequest) (interface{}, 
 	}
 
 	totalPrice := newPrice.Price() - oldPrice.Price()
+	
 	if org.Balance() > totalPrice {
 		balanceUsed := totalPrice
 
