@@ -317,10 +317,10 @@ func (c *BillController) PaymentCallback(ctx *gin.Context) {
 
 func (c *BillController) CreatePaymentURL(ctx *gin.Context) {
 	var params struct {
-		BillID string `json:"bill_id" binding:"required"`
+		BillID string `uri:"bill_id" binding:"required"`
 	}
 
-	if err := ctx.ShouldBindJSON(&params); err != nil {
+	if err := ctx.ShouldBindUri(&params); err != nil {
 		ctx.JSON(400,
 			gin.H{
 				"status":  http.StatusBadRequest,

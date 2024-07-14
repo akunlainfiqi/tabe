@@ -114,7 +114,7 @@ func New() *gin.Engine {
 	jwt.POST("/tenants/extend", tenantController.ExtendTenant)
 	jwt.GET("/organizations/:org_id", organizationController.GetByID)
 	jwt.GET("/organizations/:org_id/bills", billsControlerr.GetOrganizationBills)
-	jwt.POST("/organizations/:org_id/bills/payment", billsControlerr.CreatePaymentURL)
+	jwt.GET("/organizations/:org_id/bills/:bill_id/payment", billsControlerr.CreatePaymentURL)
 	jwt.GET("/organizations/:org_id/bills/:bill_id", billsControlerr.GetBillDetail)
 	jwt.GET("/organizations/:org_id/bills/:bill_id/transaction", transactionController.GetByBillsID)
 	jwt.GET("/organizations/:org_id/tenants", tenantController.GetByOrgID)
