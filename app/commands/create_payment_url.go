@@ -2,7 +2,9 @@ package commands
 
 import (
 	"saas-billing/app/services"
+	"saas-billing/domain/entities"
 	"saas-billing/domain/repositories"
+	"saas-billing/errors"
 )
 
 type CreatePaymentURLRequest struct {
@@ -28,6 +30,10 @@ func (c *CreatePaymentURLCommand) Execute(req *CreatePaymentURLRequest) (interfa
 	bill, err := c.billsRepository.GetByID(req.BillID)
 	if err != nil {
 		return nil, err
+	}
+
+	if bill.Status() != entities.BillStatusWaitingPayment {
+		return nil, errors.ErrInvalidBillStatus
 	}
 
 	paymentURL, err := c.midtransService.CreateTransaction(bill.ID(), bill.Total())

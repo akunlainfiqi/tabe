@@ -44,24 +44,7 @@ func NewBillController(
 }
 
 func (c *BillController) InternalExpire(ctx *gin.Context) {
-	var params struct {
-		BillId string `json:"bill_id" binding:"required"`
-	}
-
-	if err := ctx.ShouldBindJSON(&params); err != nil {
-		ctx.JSON(400,
-			gin.H{
-				"status":  http.StatusBadRequest,
-				"message": err.Error(),
-			})
-		return
-	}
-
-	req := commands.NewExpireBillsRequest(
-		params.BillId,
-	)
-
-	if err := c.ExpireBillsCommand.Execute(req); err != nil {
+	if err := c.ExpireBillsCommand.Execute(); err != nil {
 		ctx.JSON(500,
 			gin.H{
 				"status":  http.StatusInternalServerError,

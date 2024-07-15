@@ -127,7 +127,7 @@ func New() *gin.Engine {
 	v1.GET("/products/:app_id", productController.GetByAppID)
 	v1.POST("/products", productController.Create)
 
-	v1.POST("/bills/expire", billsControlerr.InternalExpire)
+	v1.GET("/bills/expire", billsControlerr.InternalExpire)
 	v1.POST("/bills/pay", billsControlerr.InternalPay)
 	v1.GET("/bills/checkall", billsControlerr.InternalCheckPayment)
 	v1.POST("/bills/callback", billsControlerr.PaymentCallback)

@@ -4,16 +4,6 @@ import (
 	"saas-billing/domain/repositories"
 )
 
-type ExpireBillsRequest struct {
-	billId string
-}
-
-func NewExpireBillsRequest(billId string) *ExpireBillsRequest {
-	return &ExpireBillsRequest{
-		billId: billId,
-	}
-}
-
 type ExpireBillsCommand struct {
 	billsRepository repositories.BillsRepository
 }
@@ -24,13 +14,19 @@ func NewExpireBillsCommand(billsRepository repositories.BillsRepository) *Expire
 	}
 }
 
-func (c *ExpireBillsCommand) Execute(req *ExpireBillsRequest) error {
-	bills, err := c.billsRepository.GetByID(req.billId)
+func (c *ExpireBillsCommand) Execute() error {
+	bills, err := c.billsRepository.GetUnpaidBillsAfterDueDate()
 	if err != nil {
 		return err
 	}
 
-	bills.Expire()
+	for _, bill := range bills {
+		bill.Expire()
 
-	return c.billsRepository.Update(bills)
+		if err := c.billsRepository.Update(bill); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
